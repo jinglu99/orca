@@ -52,6 +52,31 @@ describe('packaged runtime resources', () => {
     }
   })
 
+  it('accepts node builtins reachable only through the node: prefix', async () => {
+    // `builtinModules` lists neither, so the prefix itself has to be what clears them.
+    expect(isPackagedExternalSpecifier('node:sqlite')).toBe(false)
+    expect(isPackagedExternalSpecifier('node:test')).toBe(false)
+
+    const resourcesDir = await mkdtemp(join(tmpdir(), 'orca-runtime-node-prefix-'))
+    try {
+      await writeFile(join(resourcesDir, 'app.asar'), '', 'utf8')
+
+      // The shape rolldown emits for the static `node:sqlite` import the cookie import reaches.
+      const sources = new Map([
+        ['out/main/index.js', 'let He=require(`node:url`),Ue=require(`node:sqlite`)'],
+        ['out/main/agent-hooks/managed-agent-hook-controls.js', 'const p = require("node:path")']
+      ])
+      const asar = {
+        listPackage: () => [...sources.keys()].map((entry) => `/${entry}`),
+        extractFile: (_asarPath, internalPath) => Buffer.from(sources.get(internalPath), 'utf8')
+      }
+
+      expect(() => verifyPackagedMainRuntimeDeps(resourcesDir, asar)).not.toThrow()
+    } finally {
+      await removeTree(resourcesDir)
+    }
+  })
+
   it('verifies literal dynamic imports from the packaged main bundle', async () => {
     const resourcesDir = await mkdtemp(join(tmpdir(), 'orca-runtime-dynamic-imports-'))
     try {

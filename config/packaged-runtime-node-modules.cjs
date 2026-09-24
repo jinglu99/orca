@@ -84,6 +84,11 @@ function isPackagedExternalSpecifier(specifier) {
   return (
     !specifier.startsWith('.') &&
     !specifier.startsWith('/') &&
+    // Why the prefix test on top of the set: `node:` is reserved by Node, so such a specifier is
+    // never resolved from node_modules and no copied package could satisfy it. `builtinModules`
+    // omits the builtins reachable only through the prefix -- `node:sqlite`, which the main bundle
+    // imports for cookie import and session search, among them.
+    !specifier.startsWith('node:') &&
     specifier !== 'electron' &&
     !NODE_BUILTINS.has(specifier)
   )
