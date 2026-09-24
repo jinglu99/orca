@@ -31,6 +31,11 @@ export const WorktreeCreate = z
     baseBranch: OptionalString,
     compareBaseRef: OptionalString,
     branchNameOverride: OptionalString,
+    // Why a plain string on the wire: the host confines it to that repo's workspace root
+    // before use, so an unreachable or crafted value is rejected there, not trusted here.
+    worktreePathOverride: OptionalString,
+    // A perf hint only: an older host that drops it simply keeps the blocking fetch.
+    baseRefRefresh: z.enum(['blocking', 'background']).optional(),
     linkedIssue: TriStateLinkedIssue,
     linkedPR: TriStateLinkedIssue,
     linkedLinearIssue: z.string().optional(),

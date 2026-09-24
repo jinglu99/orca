@@ -3,6 +3,7 @@ import type { FolderWorkspace } from '../../../shared/folder-workspace-types'
 import type { PersistedState } from '../../../shared/persisted-state-types'
 import type { Repo } from '../../../shared/repo-types'
 import { normalizeFolderWorkspaceName } from '../../../shared/folder-workspaces'
+import { isFolderWorkspaceLayout } from '../../../shared/folder-workspace-layout'
 import { getNextProjectGroupOrder } from '../../../shared/project-groups'
 import { normalizeStoredTaskSourceContext } from '../../../shared/task-source-context'
 import { normalizeWorkspaceLinkedItem } from '../../../shared/workspace-linked-item'
@@ -55,6 +56,7 @@ export class FolderWorkspacePersistenceOperations {
     projectGroupId: string
     name?: string
     folderPath?: string | null
+    layout?: FolderWorkspace['layout']
     linkedTask?: FolderWorkspace['linkedTask']
     linkedTaskSourceContext?: FolderWorkspace['linkedTaskSourceContext']
     connectionId?: string | null
@@ -81,6 +83,7 @@ export class FolderWorkspacePersistenceOperations {
       projectGroupId: group.id,
       name: normalizeFolderWorkspaceName(input.name, `${group.name} workspace`),
       folderPath,
+      ...(isFolderWorkspaceLayout(input.layout) ? { layout: input.layout } : {}),
       connectionId: input.connectionId ?? group.connectionId ?? null,
       ...(input.creatorProvenance ? { creatorProvenance: input.creatorProvenance } : {}),
       linkedTask,

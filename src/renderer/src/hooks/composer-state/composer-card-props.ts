@@ -3,6 +3,10 @@ import {
   getFullComposerCreateDisabled,
   getQuickComposerCreateDisabled
 } from '@/lib/new-workspace-create-gates'
+import {
+  isStaleGroupMemberSelection,
+  resolveSelectedGroupMemberRepos
+} from '@/lib/group-member-repo-selection'
 import type { ComposerModel } from './composer-model'
 import type { ComposerCardActionProps, ComposerCardSourceProps } from './composer-card-contract'
 
@@ -26,6 +30,10 @@ export function buildComposerCardProps(state: ComposerModel) {
     filteredLinkItems,
     folderDetectedAgentIds,
     folderSourceRepos,
+    selectedGroupMemberRepoIds,
+    setSelectedGroupMemberRepoIds,
+    skipGroupMemberBaseFetch,
+    setSkipGroupMemberBaseFetch,
     folderCreateDisabled,
     folderTargetConnectInProgress,
     folderTargetConnectionId,
@@ -137,6 +145,18 @@ export function buildComposerCardProps(state: ComposerModel) {
       ? getQuickComposerCreateDisabled(createGateInput)
       : getFullComposerCreateDisabled(createGateInput)
   const createDisabled = isProjectGroupTarget ? folderCreateDisabled : repoCreateDisabled
+  // Why corrected here rather than reset by an effect: a selection left over from another
+  // group would otherwise render as an empty picker until some effect caught up.
+  const effectiveSelectedGroupMemberRepoIds = isStaleGroupMemberSelection(
+    folderSourceRepos,
+    selectedGroupMemberRepoIds
+  )
+    ? null
+    : selectedGroupMemberRepoIds
+  const selectedGroupMemberRepos = resolveSelectedGroupMemberRepos(
+    folderSourceRepos,
+    effectiveSelectedGroupMemberRepoIds
+  )
   const cardProps: ComposerCardSourceProps & ComposerCardActionProps = {
     eligibleRepos: isProjectGroupTarget ? folderSourceRepos : eligibleRepos,
     repoId,
@@ -213,6 +233,14 @@ export function buildComposerCardProps(state: ComposerModel) {
     onOpenAgentSettings: handleOpenAgentSettings,
     advancedOpen,
     onToggleAdvanced: () => setAdvancedOpen((current) => !current),
+    // Why gated on the group target: a single-repo create pays one fetch, which is not worth a
+    // control; the trade only becomes real once one submit fans out across a group's repos.
+    groupMemberRepoCount: isProjectGroupTarget ? selectedGroupMemberRepos.length : 0,
+    groupMemberRepos: isProjectGroupTarget ? folderSourceRepos : [],
+    selectedGroupMemberRepoIds: effectiveSelectedGroupMemberRepoIds,
+    onSelectedGroupMemberRepoIdsChange: setSelectedGroupMemberRepoIds,
+    skipGroupMemberBaseFetch,
+    onSkipGroupMemberBaseFetchChange: setSkipGroupMemberBaseFetch,
     createDisabled,
     projectError: isProjectGroupTarget ? pathStatusProjectError : projectError,
     creating,

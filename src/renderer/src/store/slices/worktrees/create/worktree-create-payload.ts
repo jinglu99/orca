@@ -16,6 +16,18 @@ export type CreateWorktreeCallOptions = {
   displayNameKind?: CreateWorktreeArgs['displayNameKind']
   /** Parent picked in the composer. Sets sidebar nesting only; ignored if it no longer exists. */
   parentWorktreeId?: string
+  /** Attaches the create to this folder workspace instead of whichever one happens to be
+   *  active, so a group create can fan out before revealing the workspace. */
+  parentFolderWorkspaceId?: string
+  /** Exact checkout directory, replacing the derived layout. Used to co-locate a group
+   *  workspace's member repos; the host confines it to that repo's workspace root. */
+  worktreePathOverride?: string
+  /** Lets a fan-out opt out of waiting on the per-repo base-ref fetch. See CreateWorktreeArgs. */
+  baseRefRefresh?: CreateWorktreeArgs['baseRefRefresh']
+  /** Silences this create's own base-ref notices. Set by a fan-out that creates one worktree per
+   *  repo in a group: each notice is sticky and keyed per worktree, so a 49-repo group would stack
+   *  49 of them. The caller reports the same information once instead. */
+  suppressCreateNotices?: boolean
   provisionedRoot?: {
     runtimeId: string
     executionHostId: ExecutionHostId
@@ -49,6 +61,10 @@ function sharedCreateFields(
     baseBranch: request.baseBranch,
     ...(request.compareBaseRef ? { compareBaseRef: request.compareBaseRef } : {}),
     ...(attempt.branchNameOverride ? { branchNameOverride: attempt.branchNameOverride } : {}),
+    ...(options?.worktreePathOverride
+      ? { worktreePathOverride: options.worktreePathOverride }
+      : {}),
+    ...(options?.baseRefRefresh ? { baseRefRefresh: options.baseRefRefresh } : {}),
     setupDecision: request.setupDecision,
     sparseCheckout: request.sparseCheckout,
     ...(request.displayName ? { displayName: request.displayName } : {}),

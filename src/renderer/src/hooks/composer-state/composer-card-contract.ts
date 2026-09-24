@@ -1,3 +1,4 @@
+import type { Repo } from '../../../../shared/repo-types'
 import type { ComposerModel } from './composer-model'
 
 export type ComposerCardSourceProps = Pick<
@@ -33,6 +34,7 @@ export type ComposerCardSourceProps = Pick<
   | 'tuiAgent'
   | 'detectedAgentIds'
   | 'advancedOpen'
+  | 'skipGroupMemberBaseFetch'
   | 'projectError'
   | 'creating'
   | 'note'
@@ -95,6 +97,12 @@ export type ComposerCardActionProps = {
   onTuiAgentChange: ComposerModel['setTuiAgent']
   onOpenAgentSettings: ComposerModel['handleOpenAgentSettings']
   onToggleAdvanced: () => void
+  /** Derived from the selected target, so these are not composer-model keys. */
+  groupMemberRepoCount: number
+  groupMemberRepos: readonly Repo[]
+  selectedGroupMemberRepoIds: ReadonlySet<string> | null
+  onSelectedGroupMemberRepoIdsChange: (next: ReadonlySet<string> | null) => void
+  onSkipGroupMemberBaseFetchChange: (next: boolean) => void
   createDisabled: boolean
   onCreate: () => void
   onNoteChange: ComposerModel['setNote']

@@ -1,7 +1,11 @@
 import type { StateCreator } from 'zustand'
 import type { AppState } from '../types'
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
-import { WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY } from '../../../../shared/protocol-version'
+import {
+  GROUP_WORKSPACE_LAYOUT_RUNTIME_CAPABILITY,
+  GROUP_WORKSPACE_LAYOUT_UPDATE_REQUIRED_MESSAGE,
+  WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY
+} from '../../../../shared/protocol-version'
 import {
   assertRuntimeEnvironmentCapability,
   callRuntimeRpc,
@@ -73,6 +77,16 @@ export function createFolderWorkspaceMutationActions(
             target.environmentId,
             WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY,
             'Update the remote runtime to link Jira'
+          )
+        }
+        // Why negotiated rather than sent hopefully: an older host drops `layout` and returns a
+        // shared-parent workspace, and the member creates that follow would then scatter across
+        // per-repo directories with nothing to tell the user the grouping did not happen.
+        if (target.kind === 'environment' && args.layout === 'isolated-container') {
+          await assertRuntimeEnvironmentCapability(
+            target.environmentId,
+            GROUP_WORKSPACE_LAYOUT_RUNTIME_CAPABILITY,
+            GROUP_WORKSPACE_LAYOUT_UPDATE_REQUIRED_MESSAGE
           )
         }
         const workspace =

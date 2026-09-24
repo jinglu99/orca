@@ -201,6 +201,7 @@ export type RepoSlice = {
       projectGroupId: string
       name?: string
       folderPath?: string | null
+      layout?: FolderWorkspace['layout']
       connectionId?: string | null
       linkedTask?: FolderWorkspace['linkedTask']
       linkedTaskSourceContext?: FolderWorkspace['linkedTaskSourceContext']

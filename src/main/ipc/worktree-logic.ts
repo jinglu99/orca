@@ -218,6 +218,25 @@ export function computeRemoteWorktreePath(
   return pathOps.join(repoPath, '..', `${repoName}-${sanitizedName}`)
 }
 
+/**
+ * The directory a remote create is allowed to write inside: the root the path
+ * `computeRemoteWorktreePath` would return sits under. Both branches must stay in step, or an
+ * explicit path override is confined to a directory the ordinary create never uses.
+ */
+export function computeRemoteWorktreeContainmentRoot(
+  repoPath: string,
+  settings: WorktreePathSettings,
+  options: { useConfiguredAbsolutePath?: boolean } = {}
+): string {
+  if (
+    options.useConfiguredAbsolutePath ||
+    isWorkspaceDirRelativeToRepo(repoPath, settings.workspaceDir)
+  ) {
+    return computeWorkspaceRoot(repoPath, settings)
+  }
+  return getRuntimePathOps(repoPath, repoPath).join(repoPath, '..')
+}
+
 export function getWorktreePathSettings(
   repo: WorktreeBasePathRepo,
   settings: WorktreePathSettings,

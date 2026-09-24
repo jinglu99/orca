@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => {
 
 type MockState = {
   repos: { id: string }[]
+  projectGroups: unknown[]
+  collapsedGroups: Set<string>
+  setCollapsedGroups: (keys: readonly string[]) => void
   groupBy: string
   sidebarBody: 'workspaces' | 'agents'
   sidebarWidth: number
@@ -111,6 +114,9 @@ beforeEach(() => {
   mocks.shortcutLabel.current = '⌘N'
   mockState = {
     repos: [],
+    projectGroups: [],
+    collapsedGroups: new Set<string>(),
+    setCollapsedGroups: vi.fn(),
     groupBy: 'repo',
     sidebarBody: 'workspaces',
     sidebarWidth: 280,

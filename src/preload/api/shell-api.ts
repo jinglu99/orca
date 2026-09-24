@@ -1,10 +1,12 @@
 import type {
+  DetectedOpenInApplication,
   ShellOpenExternalEditorRequest,
   ShellOpenExternalEditorResult,
   ShellOpenLocalPathResult
 } from '../../shared/shell-open-types'
 
 export type {
+  DetectedOpenInApplication,
   ShellOpenExternalEditorRequest,
   ShellOpenExternalEditorResult,
   ShellOpenLocalPathResult
@@ -16,6 +18,8 @@ export type ShellApi = {
   openInExternalEditor: (
     request: ShellOpenExternalEditorRequest
   ) => Promise<ShellOpenExternalEditorResult>
+  detectOpenInApplications: () => Promise<DetectedOpenInApplication[]>
+  getOpenInAppIcons: (commands: string[]) => Promise<Record<string, string>>
   openUrl: (url: string) => Promise<void>
   openFilePath: (path: string) => Promise<boolean>
   openFileUri: (uri: string) => Promise<void>

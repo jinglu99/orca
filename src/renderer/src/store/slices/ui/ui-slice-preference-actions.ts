@@ -202,6 +202,14 @@ export function createUiPreferenceActions(set: UISliceSet, get: UISliceGet): Par
         window.api.ui.set({ collapsedGroups: [...next] }).catch(console.error)
         return { collapsedGroups: next }
       }),
+    // Why a whole-set write rather than looping toggleCollapsedGroup: a sweep over every project
+    // would otherwise persist once per key, and each write races the last one to disk.
+    setCollapsedGroups: (keys) =>
+      set(() => {
+        const next = new Set(keys)
+        window.api.ui.set({ collapsedGroups: [...next] }).catch(console.error)
+        return { collapsedGroups: next }
+      }),
 
     worktreeCardProperties: [...DEFAULT_WORKTREE_CARD_PROPERTIES],
     _worktreeCardModeDefaulted: true,

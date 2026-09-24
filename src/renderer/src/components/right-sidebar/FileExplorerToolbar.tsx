@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { WorktreeOpenInMenuItems } from '@/components/sidebar/WorktreeOpenInMenu'
+import { WorkspaceOpenInIdeButton } from './WorkspaceOpenInIdeButton'
 import { translate } from '@/i18n/i18n'
 import { cn } from '@/lib/utils'
 
@@ -126,6 +127,7 @@ export function FileExplorerToolbar({
           )}
         </TooltipContent>
       </Tooltip>
+      <WorkspaceOpenInIdeButton worktreePath={worktreePath} connectionId={connectionId} />
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger asChild>

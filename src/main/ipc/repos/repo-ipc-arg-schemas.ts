@@ -132,6 +132,7 @@ export const FolderWorkspaceCreateArgs = z
     projectGroupId: z.string().min(1),
     name: z.string().optional(),
     folderPath: z.string().nullable().optional(),
+    layout: z.enum(['shared-parent', 'isolated-container']).optional(),
     connectionId: z.string().nullable().optional(),
     linkedTask: FolderWorkspaceLinkedTaskArgs.optional(),
     linkedTaskSourceContext: TaskSourceContextSchema.nullable().optional(),

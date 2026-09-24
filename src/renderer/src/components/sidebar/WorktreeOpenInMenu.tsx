@@ -11,7 +11,7 @@ import {
 import { useAppStore } from '@/store'
 import { isLocalPathOpenBlocked, showLocalPathOpenBlockedToast } from '@/lib/local-path-open-guard'
 import { getLocalFileManagerLabel } from '@/lib/local-file-manager-label'
-import { OpenInApplicationIcon } from '@/lib/open-in-app-catalog'
+import { InstalledOpenInApplicationIcon } from '@/lib/open-in-app-catalog'
 import { getExternalEditorOpenCapability } from '@/lib/external-editor-open-capability'
 import { NO_OPEN_IN_APPLICATIONS } from '@/lib/open-in-application-selection'
 import type { ShellOpenExternalEditorResult } from '../../../../shared/shell-open-types'
@@ -157,6 +157,22 @@ function showOpenFailureToast(
         description: translate(
           'auto.components.sidebar.WorktreeOpenInMenu.remoteEditorUnsupportedDetail',
           'Choose VS Code or use the app locally.'
+        )
+      }
+    )
+    return
+  }
+  if (result.reason === 'editor-command-not-found') {
+    toast.error(
+      translate(
+        'auto.components.sidebar.WorktreeOpenInMenu.editorCommandNotFound',
+        'Could not find "{{command}}" on this machine.',
+        { command: result.command }
+      ),
+      {
+        description: translate(
+          'auto.components.sidebar.WorktreeOpenInMenu.editorCommandNotFoundDetail',
+          'The app may be installed without a command-line launcher on PATH. Set the full path to its launcher in Settings, under Open in apps.'
         )
       }
     )
@@ -327,7 +343,7 @@ export function WorktreeOpenInMenuItems({
             {entry.target === 'file-manager' ? (
               <FolderOpen className="size-3.5" />
             ) : entry.command ? (
-              <OpenInApplicationIcon application={{ command: entry.command }} size={14} />
+              <InstalledOpenInApplicationIcon application={{ command: entry.command }} size={14} />
             ) : (
               <ExternalLink className="size-3.5" />
             )}
@@ -350,13 +366,19 @@ export function WorktreeOpenInMenuItems({
 export function WorktreeOpenInSubMenu({
   worktreePath,
   connectionId,
-  disabled
-}: WorktreeOpenInMenuItemsProps): React.JSX.Element {
+  disabled,
+  label,
+  icon
+}: WorktreeOpenInMenuItemsProps & {
+  /** Overrides the "Open in" trigger, so a caller can offer one submenu per target path. */
+  label?: string
+  icon?: React.ReactNode
+}): React.JSX.Element {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger disabled={disabled}>
-        <FolderOpen className="size-3.5" />
-        {translate('auto.components.sidebar.WorktreeOpenInMenu.8009ab69a6', 'Open in')}
+        {icon ?? <FolderOpen className="size-3.5" />}
+        {label ?? translate('auto.components.sidebar.WorktreeOpenInMenu.8009ab69a6', 'Open in')}
       </DropdownMenuSubTrigger>
       <DropdownMenuSubContent
         className="w-52"

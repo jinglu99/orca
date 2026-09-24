@@ -9,6 +9,8 @@ import {
   getFolderWorkspacePathStatusForPath
 } from '../../project-groups/folder-workspace-path-status'
 import { getSshFilesystemProvider } from '../../providers/ssh-filesystem-dispatch'
+import { normalizeFolderWorkspaceName } from '../../../shared/folder-workspaces'
+import { resolveFolderWorkspaceCreateLocation } from '../../project-groups/folder-workspace-create-location'
 import type { OrcaRuntimeService } from '../../runtime/orca-runtime'
 import { notifyReposChanged } from './repos-changed-notification'
 import {
@@ -45,26 +47,28 @@ export function registerFolderWorkspaceHandlers(
       )
       const projectGroups = store.getProjectGroups()
       const group = projectGroups.find((entry) => entry.id === args.projectGroupId)
-      const folderPath =
-        typeof args.folderPath === 'string' && args.folderPath.trim().length > 0
-          ? args.folderPath
-          : group?.parentPath
-      if (!group || !folderPath) {
+      if (!group) {
         throw new Error('folder_workspace_project_group_not_found')
       }
-      const status = await getFolderWorkspacePathStatusForPath(
+      const connectionId = args.connectionId ?? group.connectionId ?? null
+      const workspaceName = normalizeFolderWorkspaceName(args.name, `${group.name} workspace`)
+      const folderPath = await resolveFolderWorkspaceCreateLocation(
         {
-          folderPath,
-          projectGroupId: group.id,
-          connectionId: args.connectionId ?? group.connectionId ?? null,
+          group,
           projectGroups,
-          repos: store.getRepos()
+          repos: store.getRepos(),
+          layout: args.layout,
+          workspaceName,
+          explicitFolderPath: args.folderPath,
+          connectionId,
+          workspaceDir: store.getSettings().workspaceDir
         },
         { getSshFilesystemProvider }
       )
-      assertFolderWorkspacePathUsable(status)
       const workspace = store.createFolderWorkspace({
         ...args,
+        name: workspaceName,
+        folderPath,
         creatorProvenance: { kind: 'host' }
       })
       notifyReposChanged(mainWindow)

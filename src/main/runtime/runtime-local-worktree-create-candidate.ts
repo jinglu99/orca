@@ -9,6 +9,7 @@ import {
   sanitizeWorktreeName,
   type getWorktreePathSettings
 } from '../ipc/worktree-logic'
+import { resolveWorktreeCreatePathOverride } from '../ipc/worktree-create-path-override'
 import { getBranchConflictKind } from '../git/repo'
 import {
   getBranchNameOverrideCandidate,
@@ -84,6 +85,14 @@ export async function resolveRuntimeLocalWorktreeCreateCandidate(args: {
         )
       : null
   const isRetiredName = retiredNameRegistry ? createRetiredNameLookup(retiredNameRegistry) : null
+  const pinnedWorktreePath = args.request.worktreePathOverride
+    ? resolveWorktreeCreatePathOverride(args.request.worktreePathOverride, args.workspaceRoot)
+    : null
+  // Why up front: the caller pinned this directory, so no suffix can free it and the loop would
+  // otherwise report an occupied path as an exhausted name search.
+  if (pinnedWorktreePath && (await runtimePathExists(pinnedWorktreePath))) {
+    throw new Error(`A directory already exists at "${pinnedWorktreePath}".`)
+  }
   for (let suffix = 1, attempts = 0; attempts < WORKTREE_CREATE_MAX_SUFFIX_ATTEMPTS; suffix += 1) {
     effectiveSanitizedName = shouldRetireGeneratedName
       ? getGeneratedWorktreeCreateCandidate(
@@ -185,11 +194,15 @@ export async function resolveRuntimeLocalWorktreeCreateCandidate(args: {
         continue
       }
     }
-    worktreePath = ensurePathWithinWorkspace(
-      computeWorktreePath(effectiveSanitizedName, args.repo.path, args.worktreePathSettings),
-      args.workspaceRoot
-    )
-    if (!(await runtimePathExists(worktreePath))) {
+    worktreePath =
+      pinnedWorktreePath ??
+      ensurePathWithinWorkspace(
+        computeWorktreePath(effectiveSanitizedName, args.repo.path, args.worktreePathSettings),
+        args.workspaceRoot
+      )
+    // Why the guard: a pinned path was proven free above, and re-testing it would make every
+    // remaining suffix attempt collide on the directory this create is about to make.
+    if (pinnedWorktreePath || !(await runtimePathExists(worktreePath))) {
       worktreePathResolved = true
       break
     }

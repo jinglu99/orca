@@ -42,6 +42,10 @@ export type ComposerAsyncModel = {
   setCreateMultiple: React.Dispatch<React.SetStateAction<boolean>>
   advancedOpen: boolean
   setAdvancedOpen: React.Dispatch<React.SetStateAction<boolean>>
+  selectedGroupMemberRepoIds: ReadonlySet<string> | null
+  setSelectedGroupMemberRepoIds: React.Dispatch<React.SetStateAction<ReadonlySet<string> | null>>
+  skipGroupMemberBaseFetch: boolean
+  setSkipGroupMemberBaseFetch: React.Dispatch<React.SetStateAction<boolean>>
   sparseEnabled: boolean
   setSparseEnabled: React.Dispatch<React.SetStateAction<boolean>>
   sparseDirectories: string

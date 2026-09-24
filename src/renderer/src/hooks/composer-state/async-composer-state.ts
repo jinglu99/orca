@@ -108,6 +108,15 @@ export function useComposerAsyncState(input: ComposerAsyncStateInput) {
     persistDraft ? Boolean((newWorkspaceDraft?.note ?? '').trim()) : false
   )
 
+  // Why null rather than the full id set: sticky-all must keep covering repos added to the
+  // group later, which a frozen snapshot would silently stop doing.
+  const [selectedGroupMemberRepoIds, setSelectedGroupMemberRepoIds] =
+    useState<ReadonlySet<string> | null>(null)
+
+  // Why default false: a group create should branch from the latest base like a single-repo
+  // create does. Trading that away for speed is the user's call, not the default.
+  const [skipGroupMemberBaseFetch, setSkipGroupMemberBaseFetch] = useState(false)
+
   const [sparseEnabled, setSparseEnabled] = useState(false)
 
   const [sparseDirectories, setSparseDirectories] = useState('')
@@ -241,6 +250,10 @@ export function useComposerAsyncState(input: ComposerAsyncStateInput) {
     setCreateMultiple,
     advancedOpen,
     setAdvancedOpen,
+    selectedGroupMemberRepoIds,
+    setSelectedGroupMemberRepoIds,
+    skipGroupMemberBaseFetch,
+    setSkipGroupMemberBaseFetch,
     sparseEnabled,
     setSparseEnabled,
     sparseDirectories,

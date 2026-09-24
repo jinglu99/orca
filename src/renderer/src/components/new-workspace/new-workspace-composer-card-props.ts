@@ -1,4 +1,5 @@
 import type RepoCombobox from '@/components/repo/RepoCombobox'
+import type { Repo } from '../../../../shared/repo-types'
 import type { NewWorkspaceProjectOption } from '@/lib/new-workspace-project-options'
 import type {
   NeedsSetupProjectHostOption,
@@ -93,6 +94,15 @@ export type NewWorkspaceComposerCardProps = {
   detectedAgentIds: Set<TuiAgent> | null
   onOpenAgentSettings: () => void
   advancedOpen: boolean
+  /** Git repos that a group create would each give a worktree. Absent/0 for a single-repo target. */
+  groupMemberRepoCount?: number
+  /** Every git repo the selected group offers. Absent for a single-repo target. */
+  groupMemberRepos?: readonly Repo[]
+  /** `null` means every repo in the group, including ones added later. */
+  selectedGroupMemberRepoIds?: ReadonlySet<string> | null
+  onSelectedGroupMemberRepoIdsChange?: (next: ReadonlySet<string> | null) => void
+  skipGroupMemberBaseFetch?: boolean
+  onSkipGroupMemberBaseFetchChange?: (next: boolean) => void
   onToggleAdvanced: () => void
   createDisabled: boolean
   projectError: string | null

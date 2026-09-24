@@ -21,10 +21,13 @@ export function useComposerSubmitOrchestration(
   const folderSubmitOrchestration = useFolderSubmitOrchestration({
     clearNewWorkspaceDraft: target.composerTargetStore.clearNewWorkspaceDraft,
     createFolderWorkspace: target.composerTargetStore.createFolderWorkspace,
+    createWorktree: target.composerTargetStore.createWorktree,
     decisions: target.composerTargetStore.decisions,
     disabledTuiAgents: target.workspaceIdentityState.disabledTuiAgents,
     folderCreateDisabled: source.composerNavigationActions.folderCreateDisabled,
     folderSourceRepos: target.runtimeTargetSelection.folderSourceRepos,
+    selectedGroupMemberRepoIds: target.asyncComposerState.selectedGroupMemberRepoIds,
+    skipGroupMemberBaseFetch: target.asyncComposerState.skipGroupMemberBaseFetch,
     folderTargetConnectionId: target.runtimeTargetSelection.folderTargetConnectionId,
     folderTargetIsRemote: target.runtimeTargetSelection.folderTargetIsRemote,
     folderTargetRuntimeEnvironmentId:

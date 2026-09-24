@@ -155,7 +155,12 @@ export function createCreateWorktree(
     }
     try {
       // Why outside the retry loop: a branch-name conflict retry must not re-warn about the same dropped pick.
-      const parent = resolveWorktreeCreateParent(get(), repoId, options?.parentWorktreeId)
+      const parent = resolveWorktreeCreateParent(
+        get(),
+        repoId,
+        options?.parentWorktreeId,
+        options?.parentFolderWorkspaceId
+      )
       let warnedParentDropped = false
       const warnParentDroppedOnce = (): void => {
         if (warnedParentDropped) {
@@ -206,16 +211,18 @@ export function createCreateWorktree(
           }
           applyCreatedWorktree(set, repoId, outcome.result)
           const { result } = outcome
-          showLocalBaseRefRefreshToast(result.localBaseRefRefresh, result.worktree)
-          if (result.baseFallback) {
-            requestWorktreeBaseFallbackNotice(result.baseFallback)
+          if (!options?.suppressCreateNotices) {
+            showLocalBaseRefRefreshToast(result.localBaseRefRefresh, result.worktree)
+            if (result.baseFallback) {
+              requestWorktreeBaseFallbackNotice(result.baseFallback)
+            }
+            showLocalBaseRefUpdateSuggestionToast(result.localBaseRefUpdateSuggestion, {
+              updateSettings: get().updateSettings,
+              getSettings: () => get().settings,
+              openSettingsPage: get().openSettingsPage,
+              openSettingsTarget: get().openSettingsTarget
+            })
           }
-          showLocalBaseRefUpdateSuggestionToast(result.localBaseRefUpdateSuggestion, {
-            updateSettings: get().updateSettings,
-            getSettings: () => get().settings,
-            openSettingsPage: get().openSettingsPage,
-            openSettingsTarget: get().openSettingsTarget
-          })
           return result
         } catch (error) {
           const message = error instanceof Error ? error.message : String(error)

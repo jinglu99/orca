@@ -17,6 +17,10 @@ export function createShellApi(): NonNullable<Partial<PreloadApi>['shell']> {
       Promise.resolve(window.open(path, '_blank', 'noopener,noreferrer') as never),
     openInFileManager: () => Promise.resolve(openResult),
     openInExternalEditor: () => Promise.resolve(openResult),
+    // Why empty on web: detection reads this machine's filesystem, which the web client has no
+    // access to; offering a guessed list would be worse than offering none.
+    detectOpenInApplications: () => Promise.resolve([]),
+    getOpenInAppIcons: () => Promise.resolve({}),
     openUrl: (url) => Promise.resolve(window.open(url, '_blank', 'noopener,noreferrer') as never),
     openFilePath: () => Promise.resolve(false),
     openFileUri: (uri) =>

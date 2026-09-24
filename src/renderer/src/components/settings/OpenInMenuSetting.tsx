@@ -18,10 +18,15 @@ import { cn } from '@/lib/utils'
 import {
   getOpenInAppPreset,
   isOpenInAppPresetAdded,
-  OpenInApplicationIcon,
+  InstalledOpenInApplicationIcon,
   getOpenInAppPresets,
   type OpenInAppPreset
 } from '@/lib/open-in-app-catalog'
+import {
+  DetectedOpenInAppItems,
+  getUnaddedDetectedApps,
+  useDetectedOpenInApplications
+} from './DetectedOpenInApps'
 import { translate } from '@/i18n/i18n'
 
 type OpenInMenuSettingProps = {
@@ -101,7 +106,7 @@ function OpenInMenuRow({
     <div className="py-3">
       <div className="flex flex-wrap items-start gap-3">
         <div className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border/50 bg-background/50">
-          <OpenInApplicationIcon application={application} size={16} />
+          <InstalledOpenInApplicationIcon application={application} size={16} />
         </div>
 
         <div className="min-w-0 flex-1 sm:min-w-[12rem]">
@@ -278,6 +283,16 @@ export function OpenInMenuSetting({
     applyDraft([...draft, createPresetOpenInApplication(preset)])
   }
 
+  const detectedApps = useDetectedOpenInApplications()
+  const unaddedDetectedApps = getUnaddedDetectedApps(detectedApps, draft)
+
+  const addDetectedApp = (app: { command: string; label: string }): void => {
+    if (isAtLimit) {
+      return
+    }
+    applyDraft([...draft, { ...createOpenInApplication(), label: app.label, command: app.command }])
+  }
+
   const addCustomApp = (): void => {
     if (isAtLimit) {
       return
@@ -316,6 +331,11 @@ export function OpenInMenuSetting({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-64">
+            <DetectedOpenInAppItems
+              detected={unaddedDetectedApps}
+              disabled={isAtLimit}
+              onAdd={addDetectedApp}
+            />
             {getOpenInAppPresets().map((preset) => {
               const isAdded = isOpenInAppPresetAdded(draft, preset)
               return (
@@ -325,7 +345,7 @@ export function OpenInMenuSetting({
                   onSelect={() => addPreset(preset)}
                   className="gap-2"
                 >
-                  <OpenInApplicationIcon application={preset} size={14} />
+                  <InstalledOpenInApplicationIcon application={preset} size={14} />
                   <span className="min-w-0 truncate">{preset.label}</span>
                   {isAdded && (
                     <DropdownMenuShortcut className="inline-flex items-center gap-1">
@@ -337,7 +357,7 @@ export function OpenInMenuSetting({
               )
             })}
             <DropdownMenuItem disabled={isAtLimit} onSelect={addCustomApp} className="gap-2">
-              <OpenInApplicationIcon application={{ command: '' }} size={14} />
+              <InstalledOpenInApplicationIcon application={{ command: '' }} size={14} />
               <span className="min-w-0 truncate">
                 {translate('auto.components.settings.OpenInMenuSetting.03b00b1f64', 'Custom app')}
               </span>

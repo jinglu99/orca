@@ -11,8 +11,18 @@ import {
   getFolderWorkspacePathStatusForPath
 } from '../project-groups/folder-workspace-path-status'
 import { getSshFilesystemProvider } from '../providers/ssh-filesystem-dispatch'
+import { normalizeFolderWorkspaceName } from '../../shared/folder-workspaces'
+import { resolveFolderWorkspaceCreateLocation } from '../project-groups/folder-workspace-create-location'
 import type { RuntimeStore } from './runtime-store-contract'
 import { folderWorkspaceKey } from '../../shared/workspace-scope'
+import type { RemoveWorktreeResult } from '../../shared/worktree/create-types'
+import { ownsFolderWorkspaceDirectory } from '../../shared/folder-workspace-layout'
+import { removeGroupWorkspaceContainerDirectory } from '../project-groups/group-workspace-container-directory'
+import {
+  listGroupWorkspaceMemberWorktreeIds,
+  removeGroupWorkspaceMembers,
+  type GroupWorkspaceMemberTeardown
+} from './group-workspace-member-teardown'
 
 type RuntimeProjectGroupDependencies = {
   getStore: () => RuntimeStore | null
@@ -21,6 +31,8 @@ type RuntimeProjectGroupDependencies = {
   resolveFolderConnectionId: (workspace: FolderWorkspace) => string | null
   teardownFolderWorkspacePtys: (worktreeId: string, connectionId: string | null) => Promise<void>
   cleanupRemovedFolderWorkspaceState: (worktreeId: string) => void
+  /** Removes one member checkout, reusing the ordinary worktree removal path. */
+  removeMemberWorktree: (worktreeId: string) => Promise<RemoveWorktreeResult>
 }
 
 type FolderWorkspaceUpdates = Partial<
@@ -123,6 +135,7 @@ export class RuntimeProjectGroupController {
     projectGroupId: string
     name?: string
     folderPath?: string | null
+    layout?: FolderWorkspace['layout']
     connectionId?: string | null
     creatorProvenance?: FolderWorkspace['creatorProvenance']
     linkedTask?: FolderWorkspace['linkedTask']
@@ -136,26 +149,28 @@ export class RuntimeProjectGroupController {
     }
     const projectGroups = store.getProjectGroups?.() ?? []
     const group = projectGroups.find((entry) => entry.id === input.projectGroupId)
-    const folderPath =
-      typeof input.folderPath === 'string' && input.folderPath.trim().length > 0
-        ? input.folderPath
-        : group?.parentPath
-    if (!group || !folderPath) {
+    if (!group) {
       throw new Error('folder_workspace_project_group_not_found')
     }
-    const status = await getFolderWorkspacePathStatusForPath(
+    const connectionId = input.connectionId ?? group.connectionId ?? null
+    const workspaceName = normalizeFolderWorkspaceName(input.name, `${group.name} workspace`)
+    const folderPath = await resolveFolderWorkspaceCreateLocation(
       {
-        folderPath,
-        projectGroupId: group.id,
-        connectionId: input.connectionId ?? group.connectionId ?? null,
+        group,
         projectGroups,
-        repos: store.getRepos()
+        repos: store.getRepos(),
+        layout: input.layout,
+        workspaceName,
+        explicitFolderPath: input.folderPath,
+        connectionId,
+        workspaceDir: store.getSettings().workspaceDir
       },
       { getSshFilesystemProvider }
     )
-    assertFolderWorkspacePathUsable(status)
     const workspace = store.createFolderWorkspace({
       ...input,
+      name: workspaceName,
+      folderPath,
       creatorProvenance: input.creatorProvenance ?? { kind: 'host' }
     })
     this.deps.notifyReposChanged()
@@ -210,12 +225,18 @@ export class RuntimeProjectGroupController {
     return updated
   }
 
-  async deleteFolderWorkspace(folderWorkspaceId: string): Promise<{ deleted: boolean }> {
+  async deleteFolderWorkspace(
+    folderWorkspaceId: string
+  ): Promise<{ deleted: boolean; memberTeardown?: GroupWorkspaceMemberTeardown }> {
     const store = this.deps.getStore()
     if (!store?.removeFolderWorkspace) {
       throw new Error('runtime_unavailable')
     }
     const workspace = store.getFolderWorkspaces?.().find((entry) => entry.id === folderWorkspaceId)
+    let memberTeardown: GroupWorkspaceMemberTeardown | undefined
+    if (workspace && ownsFolderWorkspaceDirectory(workspace)) {
+      memberTeardown = await this.tearDownGroupWorkspaceMembers(store, workspace)
+    }
     if (workspace) {
       const worktreeId = folderWorkspaceKey(folderWorkspaceId)
       // Why: a mixed-host group has no single PTY target; forgetting the
@@ -235,6 +256,42 @@ export class RuntimeProjectGroupController {
     if (deleted) {
       this.deps.notifyReposChanged()
     }
-    return { deleted }
+    return { deleted, ...(memberTeardown ? { memberTeardown } : {}) }
+  }
+
+  /**
+   * Removes an isolated container's member checkouts and then the container itself.
+   *
+   * Why the directory is only removed once every member is gone: a member that refused to remove
+   * still has a checkout inside, and deleting the container around it would orphan git's worktree
+   * registration and take uncommitted work with it. A `shared-parent` workspace never reaches here
+   * — that folderPath is the user's own source folder.
+   */
+  private async tearDownGroupWorkspaceMembers(
+    store: RuntimeStore,
+    workspace: FolderWorkspace
+  ): Promise<GroupWorkspaceMemberTeardown> {
+    const teardown = await removeGroupWorkspaceMembers({
+      worktreeIds: listGroupWorkspaceMemberWorktreeIds(
+        store.getAllWorkspaceLineage?.() ?? {},
+        workspace.id
+      ),
+      removeWorktree: (worktreeId) => this.deps.removeMemberWorktree(worktreeId)
+    })
+    if (!teardown.allRemoved) {
+      return teardown
+    }
+    try {
+      await removeGroupWorkspaceContainerDirectory(
+        {
+          containerPath: workspace.folderPath,
+          connectionId: this.deps.resolveFolderConnectionId(workspace)
+        },
+        { getSshFilesystemProvider }
+      )
+    } catch (error) {
+      console.warn(`[folder-workspace] failed to remove container ${workspace.folderPath}:`, error)
+    }
+    return teardown
   }
 }

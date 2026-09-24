@@ -1,4 +1,5 @@
 import type { FolderWorkspace } from './folder-workspace-types'
+import { isFolderWorkspaceLayout } from './folder-workspace-layout'
 import type { ProjectGroup } from './project-group-types'
 import { isTuiAgent } from './tui-agent-config'
 import { normalizeStoredTaskSourceContext } from './task-source-context'
@@ -65,6 +66,9 @@ export function normalizeFolderWorkspaces(
       projectGroupId: raw.projectGroupId,
       name: normalizeFolderWorkspaceName(raw.name),
       folderPath,
+      // Why no fallback: an absent layout is `shared-parent`, and a stored container path
+      // cannot be told apart from a group parent, so an unreadable value must not upgrade.
+      ...(isFolderWorkspaceLayout(raw.layout) ? { layout: raw.layout } : {}),
       connectionId:
         typeof raw.connectionId === 'string'
           ? raw.connectionId

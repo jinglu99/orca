@@ -1742,7 +1742,11 @@
         "addSshHostHint": "Use an existing machine over SSH",
         "addRemoteOrcaServer": "Add Remote Orca Server",
         "addRemoteOrcaServerHint": "Pair another Orca runtime",
-        "hostConnectionFailed": "Connection failed"
+        "hostConnectionFailed": "Connection failed",
+        "groupSkipBaseFetch": "Skip pulling the latest base ref",
+        "groupSkipBaseFetchDetail": "Branches all {{value0}} repositories from the base ref already on disk. Much faster, but a repository that has not been fetched recently starts from older code.",
+        "groupMemberRepos": "Repositories",
+        "groupMemberReposDetail": "Each selected repository gets its own worktree inside the workspace directory."
       },
       "NewWorkspaceComposerModal": {
         "createWorktree": "Create worktree",
@@ -5375,7 +5379,9 @@
           "5c9c7c16aa": "Add a project to create workspaces",
           "a30e34eb5c": "Close workspace board",
           "views": "Sidebar view",
-          "addProject": "Add project"
+          "addProject": "Add project",
+          "expandAllProjects": "Expand all projects",
+          "collapseAllProjects": "Collapse all projects"
         },
         "SidebarNav": {
           "80611a8b10": "Search",
@@ -5777,7 +5783,9 @@
           "0bed8727db": "It may have been moved or deleted. Refresh workspaces or remove it from Orca.",
           "3921d3d9a5": "Workspace folder was not found.",
           "f387af445b": "Workspace path is not a valid local path.",
-          "3ec372b664": "file-manager"
+          "3ec372b664": "file-manager",
+          "editorCommandNotFound": "Could not find \"{{command}}\" on this machine.",
+          "editorCommandNotFoundDetail": "The app may be installed without a command-line launcher on PATH. Set the full path to its launcher in Settings, under Open in apps."
         },
         "WorktreeTitleInlineRename": {
           "2f42ae024f": "Unread:",
@@ -6365,7 +6373,10 @@
           "architectureMismatch": "A Git-related executable could not run because its CPU architecture is incompatible with this execution host. Install Git and related tools for the host architecture.",
           "copyCommand": "Copy command",
           "copyDiagnostics": "Copy diagnostics"
-        }
+        },
+        "groupWorkspaceMembersPartiallyCreated": "Created {{value0}} of {{value1}} repositories in \"{{value2}}\"",
+        "groupWorkspaceLocalBasesNotRefreshed": "Local base branch not refreshed in {{value0}} repositories",
+        "groupWorkspaceLocalBasesNotRefreshedDetail": "Each checkout below has uncommitted changes, so Orca left its local branch alone. The new worktrees were still created from the remote branch.\n{{value0}}"
       },
       "shared": {
         "useDaemonActions": {
@@ -7747,7 +7758,8 @@
           "810ef39b56": "cursor",
           "3ebe650f74": "App name",
           "3743ed080c": "Set command",
-          "f79084947b": "New app"
+          "f79084947b": "New app",
+          "detectedOnThisMachine": "Found on this machine"
         },
         "OrchestrationPane": {
           "52e0634e2c": "Ask a coordinator agent to use orchestration for handoffs, worktree handovers, and sequential or parallel child agents.",
@@ -12192,7 +12204,10 @@
             "d95e30fe28": "Refresh Explorer",
             "6026b16950": "Collapse All",
             "693cbeadd0": "Search",
-            "c1f3f3ec70": "Search file contents"
+            "c1f3f3ec70": "Search file contents",
+            "openInIde": "Open in external app",
+            "openInIdeRoot": "Workspace root",
+            "openInIdeRepositories": "Repositories"
           },
           "FileExplorerTreeStatus": {
             "ce03835e1f": "No files in this workspace",

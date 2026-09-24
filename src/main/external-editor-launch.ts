@@ -3,7 +3,9 @@ import { existsSync } from 'node:fs'
 import { posix, win32 } from 'node:path'
 import { parseWslUncPath } from '../shared/wsl-paths'
 import { isVsCodeLauncherExecutable } from '../shared/vscode-remote-ssh-launcher'
+import { homedir } from 'node:os'
 import { resolveCliCommand } from './codex-cli/command'
+import { resolveJetBrainsToolboxScript } from './jetbrains-toolbox-scripts'
 import {
   getLauncherBaseName,
   hasMatchingOuterQuotes,
@@ -134,11 +136,20 @@ function resolveSimpleEditorCommand(
   platform: NodeJS.Platform,
   fileExists: (path: string) => boolean
 ): string {
-  return preferJetBrainsGuiExecutable(
-    resolveCliCommand(command, { platform }),
-    platform,
-    fileExists
-  )
+  const resolved = resolveCliCommand(command, { platform })
+  // Why the extra lookup only on a miss: `resolveCliCommand` hands back the bare name when PATH
+  // and the known CLI install roots come up empty, and for a JetBrains IDE that usually means
+  // Toolbox generated a launcher in a directory only the shell PATH knows about.
+  const editorCommand =
+    resolved === command
+      ? (resolveJetBrainsToolboxScript(command, {
+          platform,
+          homePath: homedir(),
+          localAppData: process.env.LOCALAPPDATA ?? null,
+          fileExists
+        }) ?? resolved)
+      : resolved
+  return preferJetBrainsGuiExecutable(editorCommand, platform, fileExists)
 }
 
 function buildExecutableLaunchSpec(

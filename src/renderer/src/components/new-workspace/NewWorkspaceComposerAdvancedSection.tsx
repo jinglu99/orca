@@ -12,6 +12,8 @@ import {
 } from '@/lib/text-control-paste'
 import { translate } from '@/i18n/i18n'
 import { ComposerParentWorktreePicker } from './ComposerParentWorktreePicker'
+import { GroupMemberBaseFetchToggle } from './GroupMemberBaseFetchToggle'
+import { GroupMemberRepoField } from './GroupMemberRepoField'
 import type { NewWorkspaceComposerCardProps } from './new-workspace-composer-card-props'
 
 function SetupCommandPreview({
@@ -31,6 +33,12 @@ function SetupCommandPreview({
 type NewWorkspaceComposerAdvancedSectionProps = Pick<
   NewWorkspaceComposerCardProps,
   | 'advancedOpen'
+  | 'groupMemberRepoCount'
+  | 'groupMemberRepos'
+  | 'selectedGroupMemberRepoIds'
+  | 'onSelectedGroupMemberRepoIdsChange'
+  | 'skipGroupMemberBaseFetch'
+  | 'onSkipGroupMemberBaseFetchChange'
   | 'smartNameSelection'
   | 'name'
   | 'onNameValueChange'
@@ -78,6 +86,12 @@ export function NewWorkspaceComposerAdvancedSection({
   selectedRepoIsGit,
   branchesEnabled = true,
   branchNameInputId,
+  groupMemberRepoCount = 0,
+  groupMemberRepos,
+  selectedGroupMemberRepoIds = null,
+  onSelectedGroupMemberRepoIdsChange,
+  skipGroupMemberBaseFetch = false,
+  onSkipGroupMemberBaseFetchChange,
   branchNameOverride,
   onBranchNameOverrideChange,
   parentWorktreeId = null,
@@ -200,6 +214,23 @@ export function NewWorkspaceComposerAdvancedSection({
                 className="w-full min-w-0 rounded-md border border-input bg-transparent px-3 py-1.5 text-sm shadow-xs transition-[color,box-shadow] outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
               />
             </div>
+          ) : null}
+
+          {groupMemberRepos && groupMemberRepos.length > 0 && onSelectedGroupMemberRepoIdsChange ? (
+            <GroupMemberRepoField
+              repos={groupMemberRepos}
+              selectedRepoIds={selectedGroupMemberRepoIds}
+              onSelectedRepoIdsChange={onSelectedGroupMemberRepoIdsChange}
+            />
+          ) : null}
+
+          {groupMemberRepoCount > 0 && onSkipGroupMemberBaseFetchChange ? (
+            <GroupMemberBaseFetchToggle
+              repoCount={groupMemberRepoCount}
+              skipBaseFetch={skipGroupMemberBaseFetch}
+              onSkipBaseFetchChange={onSkipGroupMemberBaseFetchChange}
+              disabled={!advancedOpen}
+            />
           ) : null}
 
           {selectedRepoIsGit && branchesEnabled && onParentWorktreeIdChange ? (

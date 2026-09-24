@@ -109,6 +109,21 @@ export type CreateWorktreeArgs = {
    *  name. Used when creating from an existing branch whose local branch name
    *  legitimately contains `/` while the worktree directory must not. */
   branchNameOverride?: string
+  /** Optional exact checkout directory, replacing the layout Orca derives from the workspace
+   *  root and the worktree name. Set by callers that co-locate several repos' worktrees under
+   *  one directory; the value is confined to the repo's workspace root, and because the caller
+   *  pins it, an occupied path fails instead of sliding to a `-2` sibling. */
+  worktreePathOverride?: string
+  /**
+   * How to treat the base-ref refresh the `refreshLocalBaseRefOnWorktreeCreate` setting asks for.
+   *
+   * `'blocking'` (the default) waits for the fetch before checking out. `'background'` waits only
+   * when the repo has no local base ref to fall back on — otherwise the fetch runs detached and the
+   * checkout proceeds from the ref already on disk. Fanning one workspace across a group's repos
+   * pays this fetch per repo through a 3-wide network budget, which is the difference between a
+   * few seconds and several minutes; a possibly-minutes-stale base is the price.
+   */
+  baseRefRefresh?: 'blocking' | 'background'
   setupDecision?: SetupDecision
   sparseCheckout?: CreateSparseCheckoutRequest
   linkedIssue?: number

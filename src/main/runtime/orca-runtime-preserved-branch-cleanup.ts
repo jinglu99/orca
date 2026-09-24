@@ -242,7 +242,8 @@ export class OrcaRuntimeWithPreservedBranchCleanup extends OrcaRuntimeWithTermin
       if (this.store) {
         this.removeWorktreeMetadataAndHistory(this.store, worktreeId)
       }
-    }
+    },
+    removeMemberWorktree: (worktreeId) => this.removeManagedWorktree(`id:${worktreeId}`)
   })
 
   protected readonly nestedRepoImport = new RuntimeNestedRepoImport({

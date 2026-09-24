@@ -8,6 +8,9 @@ import { activateAndRevealFolderWorkspace } from '@/lib/worktree-activation'
 import { isWorkItemLookupText } from '@/lib/work-item-lookup-text'
 import type { FolderWorkspace } from '../../../../shared/folder-workspace-types'
 import type { ProjectGroup } from '../../../../shared/project-group-types'
+import type { Repo } from '../../../../shared/repo-types'
+import type { WorktreeSlice } from '@/store/slices/worktree-helpers'
+import { createGroupWorkspaceMemberWorktrees } from './group-workspace-member-fanout'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import { resolveLocalWindowsAgentStartupShell } from '../../../../shared/windows-terminal-shell'
 import type { LaunchSource } from '../../../../shared/telemetry-events'
@@ -37,6 +40,7 @@ export {
 type FolderWorkspaceCreateInput = {
   projectGroupId: string
   name: string
+  layout?: FolderWorkspace['layout']
   connectionId?: string | null
   linkedTask: FolderWorkspace['linkedTask']
   linkedTaskSourceContext?: TaskSourceContext | null
@@ -61,6 +65,11 @@ type SubmitFolderWorkspaceCreateParams = {
   isRemote?: boolean
   launchSource?: LaunchSource
   runtimeEnvironmentId?: string | null
+  /** Git repos in the group that each get their own worktree inside the new container. */
+  memberRepos?: readonly Repo[]
+  /** Advanced-drawer opt-out: branch members from the base ref already on disk. */
+  skipGroupMemberBaseFetch?: boolean
+  createWorktree?: WorktreeSlice['createWorktree']
   createFolderWorkspace: (input: FolderWorkspaceCreateInput) => Promise<FolderWorkspace | null>
   onOpenChange: (open: boolean) => void
 }
@@ -81,6 +90,9 @@ export async function submitFolderWorkspaceCreate({
   terminalWindowsShell,
   launchSource = 'sidebar',
   runtimeEnvironmentId = null,
+  memberRepos = [],
+  skipGroupMemberBaseFetch = false,
+  createWorktree,
   createFolderWorkspace,
   onOpenChange
 }: SubmitFolderWorkspaceCreateParams): Promise<boolean> {
@@ -154,9 +166,15 @@ export async function submitFolderWorkspaceCreate({
     Boolean(quickAgent) &&
     note.trim().length > 0
 
+  // Why the group's repo count decides: an isolated container holds one worktree per git repo, so
+  // a group with none would get an empty directory instead of the shared checkouts it has today.
+  // Why omitted rather than sent as 'shared-parent': absent already means shared-parent, and only
+  // the creating path may claim a layout.
+  const isolated = memberRepos.length > 0 && Boolean(createWorktree)
   const workspace = await createFolderWorkspace({
     projectGroupId: projectGroup.id,
     name: workspaceName,
+    ...(isolated ? { layout: 'isolated-container' as const } : {}),
     // Why: SSH folder groups must keep their target provenance even when the
     // focused runtime is local or another host.
     connectionId: projectGroup.connectionId ?? null,
@@ -168,6 +186,23 @@ export async function submitFolderWorkspaceCreate({
   if (!workspace) {
     return false
   }
+  // Why started here but never awaited: a group can hold dozens of repos, and with base-ref
+  // refresh on, each member create pays a fetch through the host's 3-wide network budget. Holding
+  // the composer open until the last one lands makes creation look hung for minutes, while the
+  // sidebar already has per-member progress rows. The workspace directory exists the moment the
+  // record does, so revealing it now is honest — members fill in behind it.
+  const memberWorktrees = createWorktree
+    ? createGroupWorkspaceMemberWorktrees({
+        workspace,
+        memberRepos,
+        telemetrySource: launchSource === 'onboarding' ? 'onboarding' : 'sidebar',
+        skipBaseFetch: skipGroupMemberBaseFetch,
+        createWorktree
+      }).catch((error) => {
+        console.error('Failed to create group workspace members:', error)
+      })
+    : undefined
+  void memberWorktrees
   if (!structuredLaunch) {
     await preflightAgentTrust({
       agent: quickAgent,

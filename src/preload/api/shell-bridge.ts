@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron'
 import type {
+  DetectedOpenInApplication,
   ShellOpenExternalEditorRequest,
   ShellOpenExternalEditorResult,
   ShellOpenLocalPathResult
@@ -16,6 +17,12 @@ export const shellApi = {
     request: ShellOpenExternalEditorRequest
   ): Promise<ShellOpenExternalEditorResult> =>
     ipcRenderer.invoke('shell:openInExternalEditor', request),
+
+  detectOpenInApplications: (): Promise<DetectedOpenInApplication[]> =>
+    ipcRenderer.invoke('shell:detectOpenInApplications'),
+
+  getOpenInAppIcons: (commands: string[]): Promise<Record<string, string>> =>
+    ipcRenderer.invoke('shell:getOpenInAppIcons', commands),
 
   openUrl: (url: string): Promise<void> => ipcRenderer.invoke('shell:openUrl', url),
 

@@ -62,6 +62,13 @@ export const ORCHESTRATION_FEDERATION_CONTROL_MAIL_PROTOCOL_VERSION = 2 as const
 export const ORCHESTRATION_FEDERATION_LIFECYCLE_SETTLEMENT_PROTOCOL_VERSION = 3 as const
 export const ORCHESTRATION_CONTRACT_VERSION = 1 as const
 export const ORCHESTRATION_CONTRACT_RUNTIME_CAPABILITY = 'orchestration.contract.v1' as const
+/** The host understands `layout: 'isolated-container'` on folderWorkspace.create and
+ *  `worktreePathOverride` on worktree.create. Negotiated rather than sent optimistically: an older
+ *  host drops both silently, which would scatter a group workspace's members across per-repo
+ *  directories instead of co-locating them, with no error to show the user. */
+export const GROUP_WORKSPACE_LAYOUT_RUNTIME_CAPABILITY = 'group-workspace.layout.v1' as const
+export const GROUP_WORKSPACE_LAYOUT_UPDATE_REQUIRED_MESSAGE =
+  'Update the remote runtime to create grouped workspaces'
 export const FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY =
   'folder-workspace.path-status.v1' as const
 export const LINEAR_ISSUE_ATTRIBUTE_FILTER_RUNTIME_CAPABILITY =
@@ -333,6 +340,7 @@ export const RUNTIME_CAPABILITIES = [
   WORKTREE_LINKED_WORK_ITEM_CONTEXT_RUNTIME_CAPABILITY,
   WORKTREE_GITHUB_PR_SUPPRESSION_RUNTIME_CAPABILITY,
   FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY,
+  GROUP_WORKSPACE_LAYOUT_RUNTIME_CAPABILITY,
   LINEAR_ISSUE_ATTRIBUTE_FILTER_RUNTIME_CAPABILITY,
   JIRA_USER_FIELDS_RUNTIME_CAPABILITY,
   AI_VAULT_RUNTIME_CAPABILITY,

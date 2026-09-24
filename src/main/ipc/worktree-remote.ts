@@ -93,6 +93,7 @@ import {
   computeValidatedBranchName,
   computeWorktreePath,
   computeRemoteWorktreePath,
+  computeRemoteWorktreeContainmentRoot,
   computeWorkspaceRootAsync,
   ensurePathWithinWorkspace,
   getWorktreeCreationLayout,
@@ -100,6 +101,7 @@ import {
   hasRepoWorktreeBasePath,
   mergeWorktree
 } from './worktree-logic'
+import { resolveWorktreeCreatePathOverride } from './worktree-create-path-override'
 import { findCreatedWorktree, resolveCreatedWorktree } from './created-worktree-reconciliation'
 import type { BranchPrefixSettings } from '../../shared/branch-prefix'
 import { getRepoIdFromWorktreeId } from '../../shared/worktree/id'
@@ -1917,6 +1919,19 @@ export async function createRemoteWorktree(
   let selectedExistingLocalBranchName: string | null = null
   let lastBranchConflictKind: 'local' | 'remote' | null = null
   let remotePathResolved = false
+  const pinnedRemotePath = args.worktreePathOverride
+    ? resolveWorktreeCreatePathOverride(
+        args.worktreePathOverride,
+        computeRemoteWorktreeContainmentRoot(repo.path, worktreePathSettings, {
+          useConfiguredAbsolutePath: hasRepoWorktreeBasePath(repo)
+        })
+      )
+    : null
+  // Why up front, like the local path: the caller pinned this directory, so suffixing cannot
+  // free it and the loop would report an occupied path as an exhausted name search.
+  if (pinnedRemotePath && (await remotePathExists(fsProvider, pinnedRemotePath))) {
+    throw new Error(`A directory already exists at "${pinnedRemotePath}" on this host.`)
+  }
   const shouldRetireGeneratedName =
     args.nameWasGenerated === true && isGeneratedWorktreeCreateName(sanitizedName)
   const retiredNameRegistry = shouldRetireGeneratedName
@@ -1976,15 +1991,14 @@ export async function createRemoteWorktree(
       }
       lastBranchConflictKind = null
     }
-    remotePath = computeRemoteWorktreePath(
-      effectiveSanitizedName,
-      repo.path,
-      worktreePathSettings,
-      {
+    remotePath =
+      pinnedRemotePath ??
+      computeRemoteWorktreePath(effectiveSanitizedName, repo.path, worktreePathSettings, {
         useConfiguredAbsolutePath: hasRepoWorktreeBasePath(repo)
-      }
-    )
-    if (!(await remotePathExists(fsProvider, remotePath))) {
+      })
+    // Why the guard: a pinned path was proven free above, and re-probing it over SSH would both
+    // cost a round trip per suffix and collide on the directory this create is about to make.
+    if (pinnedRemotePath || !(await remotePathExists(fsProvider, remotePath))) {
       remotePathResolved = true
       break
     }
@@ -2468,6 +2482,15 @@ async function performLocalWorktreeCreate(
     }
   }
   const workspaceRoot = await computeWorkspaceRootAsync(repo.path, worktreePathSettings)
+  const pinnedWorktreePath = args.worktreePathOverride
+    ? resolveWorktreeCreatePathOverride(args.worktreePathOverride, workspaceRoot)
+    : null
+  // Why checked once here rather than in the suffix loop: the caller pinned this path, so no
+  // suffix can free it, and the loop would otherwise exhaust its attempts and report the
+  // occupied path as an exhausted name search.
+  if (pinnedWorktreePath && existsSync(pinnedWorktreePath)) {
+    throw new Error(`A directory already exists at "${pinnedWorktreePath}".`)
+  }
 
   // Why: this validation doesn't depend on remote refs, so it can overlap a required remote-tracking base refresh.
   const primarySetupScript = getEffectiveHooks(repo)?.scripts.setup
@@ -2640,11 +2663,20 @@ async function performLocalWorktreeCreate(
         }
       }
 
-      worktreePath = ensurePathWithinWorkspace(
-        computeWorktreePath(effectiveSanitizedName, repo.path, worktreePathSettings, workspaceRoot),
-        workspaceRoot
-      )
-      if (existsSync(worktreePath)) {
+      worktreePath =
+        pinnedWorktreePath ??
+        ensurePathWithinWorkspace(
+          computeWorktreePath(
+            effectiveSanitizedName,
+            repo.path,
+            worktreePathSettings,
+            workspaceRoot
+          ),
+          workspaceRoot
+        )
+      // Why the guard: a pinned path was proven free above, and re-testing it would make every
+      // remaining suffix attempt collide on the directory this create is about to make.
+      if (!pinnedWorktreePath && existsSync(worktreePath)) {
         continue
       }
 
@@ -2679,20 +2711,30 @@ async function performLocalWorktreeCreate(
     worktreeWorkspaceKey(`${repo.id}::${worktreePath}`)
   )
 
+  if (remoteTrackingRefresh && args.baseRefRefresh === 'background') {
+    // Why the hadLocalBaseRef guard: without a local ref there is nothing to check out, so the
+    // fetch stays blocking however impatient the caller is. With one, the checkout is already
+    // viable and the fetch only buys freshness — let it land for the next create instead.
+    if (remoteTrackingRefresh.hadLocalBaseRef) {
+      void remoteTrackingRefresh.promise.catch(() => undefined)
+      remoteTrackingRefresh = null
+    }
+  }
   if (remoteTrackingRefresh) {
+    const refresh = remoteTrackingRefresh
     await timing.time('refresh_base_ref', async () => {
-      const result = await remoteTrackingRefresh.promise
-      if (!result.ok && !remoteTrackingRefresh.hadLocalBaseRef) {
+      const result = await refresh.promise
+      if (!result.ok && !refresh.hadLocalBaseRef) {
         // Why: only block create when the refresh failed AND there's no local base ref; an existing (possibly stale) ref keeps worktree add viable.
         throw new Error(
-          `Could not refresh base ref "${baseBranch}" from "${remoteTrackingRefresh.base.remote}". Check your network and try again.`
+          `Could not refresh base ref "${baseBranch}" from "${refresh.base.remote}". Check your network and try again.`
         )
       }
       if (
-        !remoteTrackingRefresh.hadLocalBaseRef &&
+        !refresh.hadLocalBaseRef &&
         !(await runtime?.hasRemoteTrackingRef(
           repo.path,
-          remoteTrackingRefresh.base,
+          refresh.base,
           ...localWorktreeGitOptionArgs
         ))
       ) {

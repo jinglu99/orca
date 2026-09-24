@@ -1,6 +1,13 @@
-import React, { useCallback } from 'react'
-import { FolderPlus, Plus } from 'lucide-react'
+import React, { useCallback, useMemo } from 'react'
+import { ChevronsDownUp, ChevronsUpDown, FolderPlus, Plus } from 'lucide-react'
 import { useAppStore } from '@/store'
+import { useProjectHostSetupProjection } from '@/store/selectors'
+import {
+  applySidebarProjectCollapse,
+  areAllSidebarProjectsCollapsed,
+  getSidebarProjectCollapseKeys
+} from './sidebar-project-collapse-keys'
+import { EMPTY_PROJECT_GROUPS } from './worktree-list/viewport/viewport-props'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatOptionalPrimaryShortcutLabel } from '@/hooks/useShortcutLabel'
@@ -79,6 +86,67 @@ function NewWorkspaceButton({
   )
 }
 
+function CollapseProjectsButton({
+  preserveWorkspaceBoardOpen
+}: {
+  preserveWorkspaceBoardOpen: boolean
+}): React.JSX.Element | null {
+  const repos = useAppStore((s) => s.repos)
+  const projectGroups = useAppStore((s) => s.projectGroups ?? EMPTY_PROJECT_GROUPS)
+  const collapsedGroups = useAppStore((s) => s.collapsedGroups)
+  const setCollapsedGroups = useAppStore((s) => s.setCollapsedGroups)
+  const projectHostSetupProjection = useProjectHostSetupProjection()
+  const projectKeys = useMemo(
+    () =>
+      getSidebarProjectCollapseKeys({
+        repos,
+        projectGroups,
+        projectGrouping: {
+          projects: projectHostSetupProjection.projects,
+          projectHostSetups: projectHostSetupProjection.setups
+        }
+      }),
+    [projectGroups, projectHostSetupProjection, repos]
+  )
+  const allCollapsed = areAllSidebarProjectsCollapsed(projectKeys, collapsedGroups)
+  const label = allCollapsed
+    ? translate('auto.components.sidebar.SidebarHeader.expandAllProjects', 'Expand all projects')
+    : translate(
+        'auto.components.sidebar.SidebarHeader.collapseAllProjects',
+        'Collapse all projects'
+      )
+  const handleClick = useCallback(() => {
+    setCollapsedGroups(applySidebarProjectCollapse(projectKeys, collapsedGroups, !allCollapsed))
+  }, [allCollapsed, collapsedGroups, projectKeys, setCollapsedGroups])
+
+  // Why hidden with no projects: the sweep would have nothing to act on, and a control that
+  // cannot change anything reads as broken rather than as unavailable.
+  if (projectKeys.length === 0) {
+    return null
+  }
+  const Icon = allCollapsed ? ChevronsUpDown : ChevronsDownUp
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-xs"
+          type="button"
+          className="text-muted-foreground"
+          aria-label={label}
+          data-workspace-board-preserve-open={preserveWorkspaceBoardOpen ? '' : undefined}
+          onClick={handleClick}
+        >
+          <Icon className="size-3.5" strokeWidth={2.25} />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={6}>
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 export function SidebarHeaderActions({
   onWorkspaceBoardMenuOpenChange,
   agentsViewActive = false
@@ -95,6 +163,7 @@ export function SidebarHeaderActions({
             preserveWorkspaceBoardOpen
             onMenuOpenChange={onWorkspaceBoardMenuOpenChange}
           />
+          <CollapseProjectsButton preserveWorkspaceBoardOpen />
           <AddProjectButton preserveWorkspaceBoardOpen />
         </>
       )}

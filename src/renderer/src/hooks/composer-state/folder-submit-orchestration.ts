@@ -4,10 +4,13 @@ type FolderSubmitOrchestrationInput = Pick<
   ComposerModel,
   | 'clearNewWorkspaceDraft'
   | 'createFolderWorkspace'
+  | 'createWorktree'
   | 'decisions'
   | 'disabledTuiAgents'
   | 'folderCreateDisabled'
   | 'folderSourceRepos'
+  | 'selectedGroupMemberRepoIds'
+  | 'skipGroupMemberBaseFetch'
   | 'folderTargetConnectionId'
   | 'folderTargetIsRemote'
   | 'folderTargetRuntimeEnvironmentId'
@@ -30,6 +33,7 @@ type FolderSubmitOrchestrationInput = Pick<
 import { useCallback } from 'react'
 import type { TuiAgent } from '../../../../shared/tui-agent'
 import { settleComposerSubmit } from '@/lib/composer-submit-cancellation'
+import { resolveSelectedGroupMemberRepos } from '@/lib/group-member-repo-selection'
 import { isTuiAgentEnabled } from '../../../../shared/tui-agent-selection'
 import {
   resolveFolderWorkspaceLaunchDraft,
@@ -52,10 +56,13 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
   const {
     clearNewWorkspaceDraft,
     createFolderWorkspace,
+    createWorktree,
     decisions,
     disabledTuiAgents,
     folderCreateDisabled,
     folderSourceRepos,
+    selectedGroupMemberRepoIds,
+    skipGroupMemberBaseFetch,
     folderTargetConnectionId,
     folderTargetIsRemote,
     folderTargetRuntimeEnvironmentId,
@@ -146,6 +153,14 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
           isRemote: folderTargetIsRemote,
           launchSource: telemetrySource === 'onboarding' ? 'onboarding' : 'new_workspace_composer',
           runtimeEnvironmentId: folderTargetRuntimeEnvironmentId,
+          // Why resolved at submit rather than read from the picker: the picker stores
+          // sticky-all as null so repos added to the group since are still covered.
+          memberRepos: resolveSelectedGroupMemberRepos(
+            folderSourceRepos,
+            selectedGroupMemberRepoIds
+          ),
+          skipGroupMemberBaseFetch,
+          createWorktree,
           createFolderWorkspace: (input) =>
             createFolderWorkspace(input, {
               runtimeEnvironmentId: folderTargetRuntimeEnvironmentId
@@ -185,13 +200,16 @@ export function useFolderSubmitOrchestration(input: FolderSubmitOrchestrationInp
     [
       clearNewWorkspaceDraft,
       createFolderWorkspace,
+      createWorktree,
       canResolveFolderSmartGitHubSubmit,
       disabledTuiAgents,
       folderCreateDisabled,
       folderTargetConnectionId,
       folderTargetIsRemote,
       folderTargetRuntimeEnvironmentId,
-      folderSourceRepos.length,
+      folderSourceRepos,
+      selectedGroupMemberRepoIds,
+      skipGroupMemberBaseFetch,
       isSubmissionCancelled,
       linkedWorkItem,
       name,

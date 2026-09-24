@@ -25,7 +25,8 @@ export type WorktreeCreateParentPick = {
 export function resolveWorktreeCreateParent(
   state: AppState,
   repoId: string,
-  requestedParentWorktreeId: string | undefined
+  requestedParentWorktreeId: string | undefined,
+  requestedParentFolderWorkspaceId?: string
 ): WorktreeCreateParentPick {
   const picked = requestedParentWorktreeId
     ? getIndexedWorktreeById(state.worktreesByRepo, requestedParentWorktreeId)
@@ -38,6 +39,18 @@ export function resolveWorktreeCreateParent(
       pickedParentWorktreeId: usable,
       pickedDisplayName,
       staleBeforeCreate: false
+    }
+  }
+  // Why an explicit id outranks the active scope: a group create attaches every member to the
+  // workspace it just made, which is not revealed yet and so is never the active one.
+  const explicitFolderWorkspace = requestedParentFolderWorkspaceId
+    ? state.folderWorkspaces?.find((candidate) => candidate.id === requestedParentFolderWorkspaceId)
+    : undefined
+  if (explicitFolderWorkspace) {
+    return {
+      parentWorkspace: folderWorkspaceKey(explicitFolderWorkspace.id),
+      pickedDisplayName,
+      staleBeforeCreate: Boolean(requestedParentWorktreeId)
     }
   }
   const activeScope = parseWorkspaceKey(state.activeWorkspaceKey ?? '')

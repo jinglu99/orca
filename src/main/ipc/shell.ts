@@ -3,11 +3,16 @@ import { ipcMain, shell, dialog } from 'electron'
 import { constants, copyFile, readFile, stat } from 'node:fs/promises'
 import { basename, extname, isAbsolute, normalize, posix, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { homedir } from 'node:os'
 import type {
+  DetectedOpenInApplication,
   ShellOpenExternalEditorRequest,
   ShellOpenExternalEditorResult,
   ShellOpenLocalPathResult
 } from '../../shared/shell-open-types'
+import { detectOpenInApplications } from '../open-in-app-detection'
+import { loadOpenInAppIcons } from '../open-in-app-icons'
 import { MAX_REPO_ICON_UPLOAD_BYTES } from '../../shared/repo-icon'
 import type { Store } from '../persistence'
 import {
@@ -115,10 +120,20 @@ async function openInExternalEditor(
   if (!target.ok) {
     return target
   }
+  const launchSpec = resolveExternalEditorLaunchSpec(request.command, target.path)
   try {
-    await launchExternalEditor(resolveExternalEditorLaunchSpec(request.command, target.path))
+    await launchExternalEditor(launchSpec)
     return { ok: true }
-  } catch {
+  } catch (error) {
+    // Why ENOENT is called out: it means the command is not installed where Orca can see it, which
+    // the user fixes in one specific place. Every other spawn failure keeps the generic message.
+    if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      return {
+        ok: false,
+        reason: 'editor-command-not-found',
+        command: launchSpec.spawnCmd
+      }
+    }
     return { ok: false, reason: 'launch-failed' }
   }
 }
@@ -146,6 +161,24 @@ export function registerShellHandlers(store: Store): void {
   ipcMain.handle(
     'shell:openInFileManager',
     (_event, path: string): Promise<ShellOpenLocalPathResult> => openInFileManager(store, path)
+  )
+
+  ipcMain.handle(
+    'shell:getOpenInAppIcons',
+    (_event, commands: string[]): Promise<Record<string, string>> =>
+      loadOpenInAppIcons(Array.isArray(commands) ? commands : [])
+  )
+
+  ipcMain.handle('shell:detectOpenInApplications', (): DetectedOpenInApplication[] =>
+    detectOpenInApplications({
+      platform: process.platform,
+      homePath: homedir(),
+      localAppData: process.env.LOCALAPPDATA ?? null,
+      pathEnv: process.env.PATH ?? process.env.Path ?? null,
+      fileExists: existsSync,
+      readDirectory: (directory) => readdirSync(directory),
+      readTextFile: (path) => readFileSync(path, 'utf8')
+    })
   )
 
   ipcMain.handle(

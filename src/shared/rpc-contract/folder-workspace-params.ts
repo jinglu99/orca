@@ -32,6 +32,7 @@ export const FolderWorkspaceCreate = z
     projectGroupId: requiredString('Missing project group id'),
     name: OptionalString,
     folderPath: OptionalString.nullable().optional(),
+    layout: z.enum(['shared-parent', 'isolated-container']).optional(),
     connectionId: OptionalString.nullable().optional(),
     linkedTask: FolderWorkspaceLinkedTask.optional(),
     linkedTaskSourceContext: TaskSourceContextSchema.nullable().optional(),

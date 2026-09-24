@@ -1,4 +1,5 @@
 import type { ExecutionHostId } from './execution-host'
+import type { FolderWorkspaceLayout } from './folder-workspace-layout'
 import type { TaskSourceContext } from './task-source-context'
 import type { TuiAgent } from './tui-agent'
 import type { DiffComment } from './diff-comment-types'
@@ -19,6 +20,8 @@ export type FolderWorkspace = {
   projectGroupId: string
   name: string
   folderPath: string
+  /** Absent means `shared-parent`; see FolderWorkspaceLayout for why it is never backfilled. */
+  layout?: FolderWorkspaceLayout
   /** SSH target ID for folder workspaces whose folder path lives remotely. */
   connectionId?: string | null
   /** Renderer-owned host stamp for host-qualified folder catalogs. */
