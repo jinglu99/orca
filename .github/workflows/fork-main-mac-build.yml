@@ -6,6 +6,10 @@ name: Fork main macOS Build
 # `latest-mac.yml` + zip the in-app updater installs from. The app is built with
 # ORCA_RELEASE_REPO=<this repo>, so its updater follows these releases, not upstream.
 #
+# Each build is one patch above the larger of package.json and the newest tag already on
+# this repo (config/scripts/fork-release-version.mjs), so versions only ever go up and an
+# upstream merge that raises package.json is followed. Bump package.json to move major/minor.
+#
 # Signing uses a self-signed certificate from repo secrets so every build shares one
 # designated requirement — Squirrel.Mac refuses updates from ad-hoc builds. Create it
 # once and store it as secrets:
@@ -31,7 +35,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Tags from before builds were published as v<version>; pruned alongside the new ones.
+  # Tags from earlier fork build formats; pruned alongside the current v<major>.<minor>.<patch>.
   TAG_PREFIX: main-build-
   KEEP_RELEASES: 10
 
@@ -95,12 +99,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --input-type=module -e "
-            import { getLocalBuildIdentity } from './config/scripts/build-mac-local.mjs'
-            const { commit, version } = getLocalBuildIdentity()
-            console.log('commit=' + commit)
-            console.log('version=' + version)
-          " >>"$GITHUB_OUTPUT"
+          commit="$(git rev-parse --short=12 HEAD)"
+          version="$(node config/scripts/fork-release-version.mjs origin)"
+          echo "commit=$commit" >>"$GITHUB_OUTPUT"
+          echo "version=$version" >>"$GITHUB_OUTPUT"
 
       - name: Import signing certificate
         id: signing
@@ -161,7 +163,7 @@ jobs:
         run: |
           set -euo pipefail
           gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt \
-            --jq "[.[] | select((.tagName | startswith(\"$TAG_PREFIX\")) or (.tagName | contains(\"-local.\")))] | sort_by(.createdAt) | reverse | .[$KEEP_RELEASES:] | .[].tagName" |
+            --jq "[.[] | select((.tagName | startswith(\"$TAG_PREFIX\")) or (.tagName | contains(\"-local.\")) or (.tagName | test(\"^v[0-9]+[.][0-9]+[.][0-9]+$\")))] | sort_by(.createdAt) | reverse | .[$KEEP_RELEASES:] | .[].tagName" |
             while read -r tag; do
               gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag ||
                 echo "::warning::Could not delete $tag"
