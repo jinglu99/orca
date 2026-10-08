@@ -1,0 +1,137 @@
+name: Fork main macOS Build
+
+# Why: a fork has none of the upstream signing/notary secrets, so the hourly and
+# adhoc builds skip it. This packages an unsigned arm64 DMG from every push to the
+# fork's main and publishes it as a prerelease on the fork itself.
+#
+# Unsigned means Gatekeeper blocks the first launch; clear it once with
+#   xattr -dr com.apple.quarantine /Applications/Orca.app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Only the newest main is worth a package; a superseded build is wasted runner time.
+  group: fork-main-mac-build
+  cancel-in-progress: true
+
+env:
+  TAG_PREFIX: main-build-
+  KEEP_RELEASES: 10
+
+jobs:
+  build:
+    # Upstream already has signed channels for main; this exists for forks only.
+    if: github.repository != 'stablyai/orca'
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup pnpm
+        uses: pnpm/setup@v2
+        with:
+          install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: package.json
+          cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            mobile/pnpm-lock.yaml
+
+      - name: Cache electron-builder downloads
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Caches/electron
+            ~/Library/Caches/electron-builder
+          key: electron-builder-mac-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            electron-builder-mac-
+
+      # Host CPU only: this packages arm64 on an arm64 runner, so no cross-arch natives.
+      - name: Install dependencies
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: pnpm install --frozen-lockfile
+
+      - uses: ./.github/actions/install-mobile-dependencies
+
+      - name: Build app
+        run: pnpm build:release
+
+      - name: Compute build identity
+        id: identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module -e "
+            import { getLocalBuildIdentity } from './config/scripts/build-mac-local.mjs'
+            const { commit, version } = getLocalBuildIdentity()
+            console.log('commit=' + commit)
+            console.log('version=' + version)
+          " >>"$GITHUB_OUTPUT"
+
+      - name: Package DMG
+        run: node config/scripts/ensure-native-runtime.mjs --runtime=electron && pnpm exec electron-builder --config config/electron-builder.config.cjs --mac dmg --arm64 --publish never
+        env:
+          ORCA_BUILD_COMMIT: ${{ steps.identity.outputs.commit }}
+          ORCA_LOCAL_BUILD_VERSION: ${{ steps.identity.outputs.version }}
+          # No Developer ID here; let electron-builder ad-hoc sign instead of hunting the keychain.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Publish prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ steps.identity.outputs.commit }}
+          VERSION: ${{ steps.identity.outputs.version }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          dmgs=(dist/*.dmg)
+          if [[ ${#dmgs[@]} -eq 0 ]]; then
+            echo "::error::electron-builder produced no DMG in dist/"
+            exit 1
+          fi
+          tag="${TAG_PREFIX}${RUN_NUMBER}-${COMMIT}"
+          gh release create "$tag" "${dmgs[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --prerelease \
+            --latest=false \
+            --title "main @ ${COMMIT} (${VERSION})" \
+            --notes "Unsigned arm64 macOS build of main at \`${GITHUB_SHA}\`.
+
+          First launch: \`xattr -dr com.apple.quarantine /Applications/Orca.app\`"
+
+      - name: Prune old builds
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt \
+            --jq "[.[] | select(.tagName | startswith(\"$TAG_PREFIX\"))] | sort_by(.createdAt) | reverse | .[$KEEP_RELEASES:] | .[].tagName" |
+            while read -r tag; do
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag ||
+                echo "::warning::Could not delete $tag"
+            done
