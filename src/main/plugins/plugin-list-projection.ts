@@ -15,6 +15,7 @@ import {
   isOfficialPluginIdentity
 } from '../../shared/plugins/plugin-marketplace'
 import { mapWithConcurrency } from '../../shared/map-with-concurrency'
+import type { PluginTaskProviderContribution } from '../../shared/plugins/plugin-task-provider'
 
 const PLUGIN_LIST_PROJECTION_CONCURRENCY = 4
 
@@ -65,6 +66,7 @@ export type PluginListEntry = {
     keybindings: { key: string; when: 'global' | 'worktree' }[]
   }[]
   hasWorker: boolean
+  taskProviders: PluginTaskProviderContribution[]
   vmRecipes: {
     id: string
     name: string
@@ -114,6 +116,7 @@ export async function buildPluginList(
           panels: [],
           commands: [],
           hasWorker: false,
+          taskProviders: [],
           vmRecipes: [],
           restarts: 0
         }
@@ -185,6 +188,7 @@ export async function buildPluginList(
           keybindings: command.keybindings
         })),
         hasWorker: Boolean(plugin.manifest.main),
+        taskProviders: plugin.manifest.contributes.taskProviders,
         vmRecipes: service.contentPacks.vmRecipes.preview(plugin.pluginKey).map(({ recipe }) => ({
           id: recipe.id,
           name: recipe.name,

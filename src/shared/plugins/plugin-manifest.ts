@@ -16,6 +16,11 @@ import {
   pluginRelativePathSchema
 } from './plugin-manifest-fields'
 import { validatePluginManifestContributions } from './plugin-manifest-contribution-validation'
+import {
+  PLUGIN_TASK_PROVIDER_LIMIT,
+  pluginTaskProviderContributionSchema,
+  validatePluginTaskProviderContributions
+} from './plugin-task-provider'
 
 /**
  * Plugin manifest v1 (`orca-plugin.json` at the plugin root). The
@@ -114,6 +119,10 @@ export const pluginManifestSchema = z
         agents: z
           .array(pluginAgentProfileContributionSchema)
           .max(PLUGIN_AGENT_PROFILE_LIMIT)
+          .default([]),
+        taskProviders: z
+          .array(pluginTaskProviderContributionSchema)
+          .max(PLUGIN_TASK_PROVIDER_LIMIT)
           .default([])
       })
       .strict()
@@ -124,11 +133,15 @@ export const pluginManifestSchema = z
         languagePacks: [],
         keybindings: [],
         vmRecipes: [],
-        agents: []
+        agents: [],
+        taskProviders: []
       })),
     capabilities: z.array(pluginCapabilitySchema).max(32).default([])
   })
-  .superRefine(validatePluginManifestContributions)
+  .superRefine((manifest, ctx) => {
+    validatePluginManifestContributions(manifest, ctx)
+    validatePluginTaskProviderContributions(manifest, ctx)
+  })
 
 export type PluginManifest = z.infer<typeof pluginManifestSchema>
 export type PluginPanelContribution = z.infer<typeof panelContributionSchema>

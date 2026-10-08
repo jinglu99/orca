@@ -1,0 +1,31 @@
+{
+  "manifestVersion": 1,
+  "id": "meego-tasks",
+  "publisher": "orca-samples",
+  "name": "Meego Tasks",
+  "version": "0.1.0",
+  "description": "Shows your Meego work items on the Tasks page. Reads Meego through the bytedcli CLI, which must be installed and logged in (`bytedcli meego login`).",
+  "engines": { "orca": ">=1.4.0" },
+  "pluginApi": 1,
+  "main": "main.mjs",
+  "contributes": {
+    "commands": [
+      { "id": "meego.list", "title": "Meego: List work items" },
+      { "id": "meego.detail", "title": "Meego: Read work item" }
+    ],
+    "taskProviders": [
+      {
+        "id": "meego",
+        "title": "Meego",
+        "icon": "flag",
+        "listCommand": "meego.list",
+        "detailCommand": "meego.detail",
+        "views": [
+          { "id": "stories-active", "title": "进行中需求" },
+          { "id": "stories", "title": "全部需求" }
+        ]
+      }
+    ]
+  },
+  "capabilities": []
+}

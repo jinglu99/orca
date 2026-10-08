@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { createPluginWorkerRuntime } from './plugin-host-runtime'
+import { pluginWorkerCommandResultSchema } from '../../shared/plugins/plugin-host-protocol'
 
 describe('plugin worker shutdown', () => {
   it('normalizes either manifest separator before importing the worker', async () => {
@@ -72,5 +73,36 @@ describe('plugin worker shutdown', () => {
     await runtime.handleMessage({ type: 'shutdown' })
 
     expect(exit).toHaveBeenCalledWith(0)
+  })
+})
+
+describe('plugin worker command errors', () => {
+  it('truncates long command errors so the parent still accepts the result', async () => {
+    const send = vi.fn()
+    const runtime = createPluginWorkerRuntime({
+      send,
+      importModule: async () => ({
+        default: (orca: { commands: { register(id: string, handler: () => unknown): void } }) => {
+          orca.commands.register('fail', () => {
+            throw new Error('x'.repeat(20_000))
+          })
+        }
+      })
+    })
+    await runtime.handleMessage({
+      type: 'init',
+      pluginId: 'orca-samples.demo',
+      pluginRoot: '/plugin',
+      mainEntry: 'worker.js',
+      grantedCapabilities: []
+    })
+
+    await runtime.handleMessage({ type: 'invokeCommand', callId: 1, commandId: 'fail' })
+
+    const result = send.mock.calls
+      .map(([message]) => message)
+      .find((message) => message.type === 'commandResult')
+    expect(result.ok).toBe(false)
+    expect(pluginWorkerCommandResultSchema.safeParse(result).success).toBe(true)
   })
 })

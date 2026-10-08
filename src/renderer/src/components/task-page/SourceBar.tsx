@@ -13,6 +13,8 @@ import {
   SelectContent,
   SelectItem
 } from '@/components/ui/select'
+import { useActivePluginTaskSource } from '@/store/plugin-task-sources'
+import { TaskPagePluginSourceButtons } from './plugin/SourceButtons'
 export function TaskPageSourceBar({
   model
 }: {
@@ -48,6 +50,8 @@ export function TaskPageSourceBar({
     handleLinearTeamSelectionChange,
     handleLinearScopeOpen
   } = model
+  const activePluginSource = useActivePluginTaskSource()
+  const pluginSourceActive = activePluginSource.source !== null || activePluginSource.pending
   return (
     <div className="flex items-center justify-between gap-2">
       <div
@@ -73,7 +77,7 @@ export function TaskPageSourceBar({
         </Tooltip>
         <div className="mx-1 h-5 w-px bg-border/50" aria-hidden />
         {visibleSourceOptions.map((source) => {
-          const active = taskSource === source.id
+          const active = !pluginSourceActive && taskSource === source.id
           const sourceAvailabilityNotice = taskSourceAvailabilityNoticeByProvider[source.id] ?? null
           const sourceDisabled = source.disabled || sourceAvailabilityNotice?.blocking
           return (
@@ -126,14 +130,17 @@ export function TaskPageSourceBar({
             </Tooltip>
           )
         })}
-        <div
-          className="hidden min-w-0 max-w-[min(420px,40vw)] items-center rounded-md border border-border/50 bg-muted/35 px-2 py-1 text-xs text-muted-foreground sm:flex"
-          title={taskSourceContextSummary.title}
-        >
-          <span className="truncate">{taskSourceContextSummary.label}</span>
-        </div>
+        <TaskPagePluginSourceButtons activeKey={activePluginSource.source?.key ?? null} />
+        {pluginSourceActive ? null : (
+          <div
+            className="hidden min-w-0 max-w-[min(420px,40vw)] items-center rounded-md border border-border/50 bg-muted/35 px-2 py-1 text-xs text-muted-foreground sm:flex"
+            title={taskSourceContextSummary.title}
+          >
+            <span className="truncate">{taskSourceContextSummary.label}</span>
+          </div>
+        )}
       </div>
-      {taskSource === 'linear' && linearConnected ? (
+      {!pluginSourceActive && taskSource === 'linear' && linearConnected ? (
         <div className="flex items-center gap-2">
           <LinearScopeSelector
             workspaces={linearWorkspaces}
@@ -191,7 +198,7 @@ export function TaskPageSourceBar({
           </Tooltip>
         </div>
       ) : null}
-      {taskSource === 'jira' && jiraConnected ? (
+      {!pluginSourceActive && taskSource === 'jira' && jiraConnected ? (
         <div className="flex items-center gap-2">
           {jiraSites.length > 1 ? (
             <Select

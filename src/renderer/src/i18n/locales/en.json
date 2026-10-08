@@ -2324,7 +2324,15 @@
         "linearModeHasWorktreeTooltip": "Linear tickets linked to an Orca workspace",
         "linearEmptyHasWorktree": "No Linear tickets are linked to an Orca workspace yet. Start work from a Linear issue to see it here.",
         "linearOpenAttachedWorkspace": "Open workspace attached to {{value0}}",
-        "linearWorktreesColumn": "Workspaces"
+        "linearWorktreesColumn": "Workspaces",
+        "pluginTaskFilterPlaceholder": "Filter tasks",
+        "pluginTaskRefresh": "Refresh",
+        "pluginTaskNoMatches": "No tasks match the filter.",
+        "pluginTaskEmpty": "No tasks found.",
+        "pluginTaskDetailDescription": "Preview and start work from the selected task.",
+        "pluginTaskOpenInBrowser": "Open in browser",
+        "pluginTaskCloseDetail": "Close task preview",
+        "pluginTaskNoDetails": "No additional details."
       },
       "Terminal": {
         "73768427cf": "Close",

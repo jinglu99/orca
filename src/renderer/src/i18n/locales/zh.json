@@ -1953,7 +1953,15 @@
         "jiraLinkSourceUnavailable": "无法关联此 Jira 议题。请重新连接 Jira 或选择匹配的站点，然后重试。",
         "loadPageUnreachable": "第 {{value0}} 页超出了 GitHub 搜索可返回的范围。",
         "loadPageFailed": "无法从 GitHub 加载第 {{value0}} 页。",
-        "loadPageNoMoreResults": "第 {{value0}} 页没有更多结果。"
+        "loadPageNoMoreResults": "第 {{value0}} 页没有更多结果。",
+        "pluginTaskFilterPlaceholder": "筛选任务",
+        "pluginTaskRefresh": "刷新",
+        "pluginTaskNoMatches": "没有符合筛选条件的任务。",
+        "pluginTaskEmpty": "没有找到任务。",
+        "pluginTaskDetailDescription": "预览所选任务并从中开始工作。",
+        "pluginTaskOpenInBrowser": "在浏览器中打开",
+        "pluginTaskCloseDetail": "关闭任务预览",
+        "pluginTaskNoDetails": "没有更多详情。"
       },
       "Terminal": {
         "73768427cf": "关闭",

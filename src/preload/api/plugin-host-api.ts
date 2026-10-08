@@ -29,6 +29,15 @@ export type PluginHostStatus =
   | 'errored'
   | 'invalid'
 
+export type PluginHostTaskProvider = {
+  id: string
+  title: string
+  icon?: string
+  listCommand: string
+  detailCommand?: string
+  views: { id: string; title: string }[]
+}
+
 /** Wire shape of plugins:list — must stay assignable from the main-process
  *  projection in src/main/plugins/plugin-list-projection.ts. */
 export type PluginHostListEntry = {
@@ -54,6 +63,8 @@ export type PluginHostListEntry = {
     keybindings: { key: string; when: 'global' | 'worktree' }[]
   }[]
   hasWorker: boolean
+  /** Optional on the wire: older hosts omit it. */
+  taskProviders?: PluginHostTaskProvider[]
   vmRecipes?: {
     id: string
     name: string
