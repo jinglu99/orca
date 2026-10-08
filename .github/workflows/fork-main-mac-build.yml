@@ -1,11 +1,21 @@
 name: Fork main macOS Build
 
 # Why: a fork has none of the upstream signing/notary secrets, so the hourly and
-# adhoc builds skip it. This packages an unsigned arm64 DMG from every push to the
-# fork's main and publishes it as a prerelease on the fork itself.
+# adhoc builds skip it. This packages an arm64 build from every push to the fork's
+# main and publishes it as a `v<version>` release on the fork itself, with the
+# `latest-mac.yml` + zip the in-app updater installs from. The app is built with
+# ORCA_RELEASE_REPO=<this repo>, so its updater follows these releases, not upstream.
 #
-# Unsigned means Gatekeeper blocks the first launch; clear it once with
+# Signing uses a self-signed certificate from repo secrets so every build shares one
+# designated requirement — Squirrel.Mac refuses updates from ad-hoc builds. Create it
+# once and store it as secrets:
+#   ORCA_FORK_MAC_CERT_P12       base64 of a .p12 holding a codeSigning cert + key
+#   ORCA_FORK_MAC_CERT_PASSWORD  that .p12's password
+#
+# The cert is not Apple-issued, so Gatekeeper blocks the first manual install; clear it
+# once with
 #   xattr -dr com.apple.quarantine /Applications/Orca.app
+# Updates installed by the app afterwards are not quarantined.
 
 on:
   push:
@@ -21,6 +31,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
+  # Tags from before builds were published as v<version>; pruned alongside the new ones.
   TAG_PREFIX: main-build-
   KEEP_RELEASES: 10
 
@@ -76,6 +87,8 @@ jobs:
 
       - name: Build app
         run: pnpm build:release
+        env:
+          ORCA_RELEASE_REPO: ${{ github.repository }}
 
       - name: Compute build identity
         id: identity
@@ -89,40 +102,57 @@ jobs:
             console.log('version=' + version)
           " >>"$GITHUB_OUTPUT"
 
-      - name: Package DMG
-        # Why identity '-': with no Developer ID, electron-builder skips signing entirely and
-        # leaves Electron's linker signature, whose missing resource seal reads as "damaged".
-        run: node config/scripts/ensure-native-runtime.mjs --runtime=electron && pnpm exec electron-builder --config config/electron-builder.config.cjs --mac dmg --arm64 --publish never -c.mac.identity=-
-        env:
-          ORCA_BUILD_COMMIT: ${{ steps.identity.outputs.commit }}
-          ORCA_LOCAL_BUILD_VERSION: ${{ steps.identity.outputs.version }}
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
-
-      - name: Publish prerelease
+      - name: Import signing certificate
+        id: signing
         shell: bash
         env:
-          GH_TOKEN: ${{ github.token }}
-          COMMIT: ${{ steps.identity.outputs.commit }}
-          VERSION: ${{ steps.identity.outputs.version }}
-          RUN_NUMBER: ${{ github.run_number }}
+          CERT_P12: ${{ secrets.ORCA_FORK_MAC_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.ORCA_FORK_MAC_CERT_PASSWORD }}
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          dmgs=(dist/*.dmg)
-          if [[ ${#dmgs[@]} -eq 0 ]]; then
-            echo "::error::electron-builder produced no DMG in dist/"
+          if [[ -z "$CERT_P12" ]]; then
+            echo "::error::ORCA_FORK_MAC_CERT_P12 is not set; ad-hoc builds cannot auto-update (see the header of this workflow)."
             exit 1
           fi
-          tag="${TAG_PREFIX}${RUN_NUMBER}-${COMMIT}"
-          gh release create "$tag" "${dmgs[@]}" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --prerelease \
-            --latest=false \
-            --title "main @ ${COMMIT} (${VERSION})" \
-            --notes "Unsigned arm64 macOS build of main at \`${GITHUB_SHA}\`.
+          keychain="$RUNNER_TEMP/fork-signing.keychain-db"
+          keychain_password="$(uuidgen)"
+          echo "$CERT_P12" | base64 --decode >"$RUNNER_TEMP/fork-signing.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/fork-signing.p12" -k "$keychain" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain" >/dev/null
+          rm -f "$RUNNER_TEMP/fork-signing.p12"
+          # Why: codesign resolves identities through the search list even when given --keychain.
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          # Untrusted self-signed identities only appear without -v.
+          identity="$(security find-identity -p codesigning "$keychain" | awk '/^ *1\)/ { print $2; exit }')"
+          if [[ -z "$identity" ]]; then
+            echo "::error::No code-signing identity found in ORCA_FORK_MAC_CERT_P12."
+            exit 1
+          fi
+          echo "identity=$identity" >>"$GITHUB_OUTPUT"
 
-          First launch: \`xattr -dr com.apple.quarantine /Applications/Orca.app\`"
+      # Why identity '-' plus the sign hook: electron-builder only signs with identities macOS
+      # trusts; '-' gets past that lookup and the hook signs with the self-signed cert instead.
+      - name: Package and publish
+        run: >-
+          node config/scripts/ensure-native-runtime.mjs --runtime=electron &&
+          pnpm exec electron-builder --config config/electron-builder.config.cjs --mac dmg zip --arm64
+          --publish always
+          -c.mac.identity=-
+          -c.mac.sign=config/scripts/fork-mac-sign.cjs
+          -c.publish.owner="${GITHUB_REPOSITORY_OWNER}"
+          -c.publish.repo="${GITHUB_REPOSITORY#*/}"
+          -c.publish.releaseType=release
+          -c.releaseInfo.releaseName="v${ORCA_LOCAL_BUILD_VERSION}"
+          -c.releaseInfo.releaseNotes="Arm64 macOS build of main at ${GITHUB_SHA}."
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ORCA_BUILD_COMMIT: ${{ steps.identity.outputs.commit }}
+          ORCA_LOCAL_BUILD_VERSION: ${{ steps.identity.outputs.version }}
+          ORCA_FORK_MAC_SIGN_IDENTITY: ${{ steps.signing.outputs.identity }}
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: Prune old builds
         shell: bash
@@ -131,7 +161,7 @@ jobs:
         run: |
           set -euo pipefail
           gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt \
-            --jq "[.[] | select(.tagName | startswith(\"$TAG_PREFIX\"))] | sort_by(.createdAt) | reverse | .[$KEEP_RELEASES:] | .[].tagName" |
+            --jq "[.[] | select((.tagName | startswith(\"$TAG_PREFIX\")) or (.tagName | contains(\"-local.\")))] | sort_by(.createdAt) | reverse | .[$KEEP_RELEASES:] | .[].tagName" |
             while read -r tag; do
               gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag ||
                 echo "::warning::Could not delete $tag"

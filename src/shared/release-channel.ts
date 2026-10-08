@@ -24,7 +24,15 @@ export const RELEASE_CHANNEL_LABELS: Readonly<Record<ReleaseChannel, string>> = 
 export const HOURLY_RELEASE_REPO = 'stablyai/orca-hourly'
 export const DAILY_RELEASE_REPO = 'stablyai/orca-daily'
 export const ADHOC_RELEASE_REPO = 'stablyai/orca-adhoc'
-export const MAIN_RELEASE_REPO = 'stablyai/orca'
+// `owner/repo` a fork's CI bakes in via electron-vite `define` (ORCA_RELEASE_REPO env).
+declare const ORCA_RELEASE_REPO: string | null | undefined
+const UPSTREAM_RELEASE_REPO = 'stablyai/orca'
+// Why typeof: tests, the web client, and the CLI bundle never define this constant.
+export const MAIN_RELEASE_REPO =
+  typeof ORCA_RELEASE_REPO === 'string' && ORCA_RELEASE_REPO
+    ? ORCA_RELEASE_REPO
+    : UPSTREAM_RELEASE_REPO
+export const MAIN_RELEASE_LATEST_DOWNLOAD_URL = `https://github.com/${MAIN_RELEASE_REPO}/releases/latest/download`
 
 export const HOURLY_PRERELEASE_IDENTIFIER = 'hourly'
 export const DAILY_PRERELEASE_IDENTIFIER = 'daily'

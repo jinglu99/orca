@@ -396,3 +396,48 @@ describe('fetchNewerReleaseTag', () => {
     expect(netFetchMock).toHaveBeenCalledTimes(7)
   })
 })
+
+describe('fork release repo', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    netFetchMock.mockReset()
+    netRequestMock.mockReset()
+    installNetRequestFetchAdapter(netRequestMock, netFetchMock)
+    vi.stubGlobal('ORCA_RELEASE_REPO', 'someone/orca-fork')
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('reads the feed and pins downloads to the baked-in fork repo', async () => {
+    const tag = 'v1.4.197-local.1760000000000.abc123'
+    netFetchMock.mockImplementation((url: string) => {
+      if (url === 'https://github.com/someone/orca-fork/releases.atom') {
+        return Promise.resolve({
+          ok: true,
+          // Upstream entries must not leak into a fork's candidates.
+          text: () =>
+            Promise.resolve(
+              `<feed><entry><link href="https://github.com/someone/orca-fork/releases/tag/${tag}"/></entry>` +
+                '<entry><link href="https://github.com/stablyai/orca/releases/tag/v9.9.9"/></entry></feed>'
+            )
+        })
+      }
+      if (url.startsWith(`https://github.com/someone/orca-fork/releases/download/${tag}/`)) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          text: () => Promise.resolve(buildManifest(tag))
+        })
+      }
+      return Promise.resolve({ ok: false, status: 404, text: () => Promise.resolve('') })
+    })
+    const { fetchNewerReleaseTag, getReleaseDownloadUrl } =
+      await import('./updater-prerelease-feed')
+    expect(await fetchNewerReleaseTag('1.4.197-local.1750000000000.def456')).toBe(tag)
+    expect(getReleaseDownloadUrl(tag)).toBe(
+      `https://github.com/someone/orca-fork/releases/download/${encodeURIComponent(tag)}`
+    )
+  })
+})

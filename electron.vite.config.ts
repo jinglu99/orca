@@ -59,6 +59,12 @@ const ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL =
   typeof orcaDiagnosticsTokenUrl === 'string' && orcaDiagnosticsTokenUrl.length > 0
     ? JSON.stringify(orcaDiagnosticsTokenUrl)
     : 'null'
+// Why: forks publish their own builds; CI bakes `owner/repo` in so the updater follows that repo.
+const orcaReleaseRepo = process.env.ORCA_RELEASE_REPO
+const ORCA_RELEASE_REPO_LITERAL =
+  typeof orcaReleaseRepo === 'string' && /^[\w.-]+\/[\w.-]+$/.test(orcaReleaseRepo)
+    ? JSON.stringify(orcaReleaseRepo)
+    : 'null'
 
 function createStartupDiagnosticsBanner(chunkName: string): string {
   return `
@@ -280,7 +286,8 @@ export const electronViteConfig: UserConfig = {
     define: {
       ORCA_BUILD_IDENTITY: ORCA_BUILD_IDENTITY_LITERAL,
       ORCA_POSTHOG_WRITE_KEY: ORCA_POSTHOG_WRITE_KEY_LITERAL,
-      ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL
+      ORCA_DIAGNOSTICS_TOKEN_URL: ORCA_DIAGNOSTICS_TOKEN_URL_LITERAL,
+      ORCA_RELEASE_REPO: ORCA_RELEASE_REPO_LITERAL
     },
     // Why: @xterm/headless declares "exports": null in package.json, which
     // prevents Vite's default resolver from finding the CJS entry. Point
@@ -309,6 +316,10 @@ export const electronViteConfig: UserConfig = {
       }
     },
     plugins: [react(), tailwindcss(), createPdfjsViewerAssetsPlugin()],
+    // Why: release-notes links resolve the same repo the main-process updater reads.
+    define: {
+      ORCA_RELEASE_REPO: ORCA_RELEASE_REPO_LITERAL
+    },
     worker: {
       format: 'es'
     },
