@@ -1,7 +1,7 @@
 import type { AppState } from '../types'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { Repo } from '../../../../shared/repo-types'
-import { FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY } from '../../../../shared/protocol-version'
+import { FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY } from '../../../../shared/folder-workspace-runtime-capabilities'
 import type { FolderWorkspacePathStatus } from '../../../../shared/folder-workspace-path-status'
 import { findRepoForHost } from '../slices/repo-host-identity'
 import {

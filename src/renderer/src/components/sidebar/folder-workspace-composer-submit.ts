@@ -1,6 +1,5 @@
 import { ensureAgentStartupInTerminal, type LinkedWorkItemSummary } from '@/lib/new-workspace'
 import { seedNativeChatLaunchDraftForAgentTab } from '@/lib/agent-launch-prompt-delivery'
-import { preflightAgentTrust } from '@/lib/agent-trust-preflight'
 import { createBrowserUuid } from '@/lib/browser-uuid'
 import { buildAgentStartupPlan } from '@/lib/tui-agent-startup'
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
@@ -22,6 +21,7 @@ import {
   toFolderWorkspaceLinkedTask
 } from './folder-workspace-composer-helpers'
 import { planAgentSessionLaunch } from '@/lib/agent-session-launch-plan'
+import { newAgentLaunchRequestId } from '@/lib/agent-launch-request-id'
 import { beginStructuredAgentSessionProvisionalLaunch } from '@/lib/structured-agent-session-provisional-tab'
 import { getNewWorkspaceProjectGroupHostId } from '@/lib/new-workspace-project-options'
 import { useAppStore } from '@/store'
@@ -145,6 +145,7 @@ export async function submitFolderWorkspaceCreate({
     quickAgent && linkedWorkItem ? resolveFolderWorkspaceLaunchDraft(linkedWorkItem, note) : null
   const plan = quickAgent
     ? planAgentSessionLaunch(useAppStore.getState(), {
+        requestId: newAgentLaunchRequestId(),
         agent: quickAgent,
         workspace: {
           kind: 'folder',
@@ -203,13 +204,6 @@ export async function submitFolderWorkspaceCreate({
       })
     : undefined
   void memberWorktrees
-  if (!structuredLaunch) {
-    await preflightAgentTrust({
-      agent: quickAgent,
-      workspacePath: workspace.folderPath,
-      connectionId: workspace.connectionId ?? projectGroup.connectionId
-    })
-  }
   if (startupPlan && !startupPlan.launchToken) {
     // Why: delayed delivery must target the exact pane spawned from this queued
     // startup, so both halves share one renderer-session token.

@@ -69,6 +69,8 @@ type NewWorkspaceComposerAdvancedSectionProps = Pick<
   | 'onSparseSelectPreset'
   | 'canUseSparseCheckout'
 > & {
+  sparseEditing?: boolean
+  onSparseEditingChange: (editing: boolean) => void
   branchNameInputId: string
   setupConfigLabel: string
   setupRunLabel: string
@@ -80,6 +82,8 @@ type NewWorkspaceComposerAdvancedSectionProps = Pick<
 
 export function NewWorkspaceComposerAdvancedSection({
   advancedOpen,
+  sparseEditing,
+  onSparseEditingChange,
   smartNameSelection,
   name,
   onNameValueChange,
@@ -158,7 +162,8 @@ export function NewWorkspaceComposerAdvancedSection({
   return (
     <div
       className={cn(
-        'grid overflow-hidden transition-[grid-template-rows] duration-200 ease-out',
+        'grid transition-[grid-template-rows] duration-200 ease-out',
+        advancedOpen && sparseEditing ? 'overflow-visible' : 'overflow-hidden',
         !advancedOpen && '!mt-2',
         advancedOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
       )}
@@ -303,7 +308,7 @@ export function NewWorkspaceComposerAdvancedSection({
                     <div className="flex items-start justify-between gap-3 p-3">
                       <span
                         className={cn(
-                          'min-w-0 space-y-1',
+                          'min-w-0',
                           resolvedSetupDecision === 'run' ? '' : 'opacity-50'
                         )}
                       >
@@ -311,12 +316,6 @@ export function NewWorkspaceComposerAdvancedSection({
                           {translate(
                             'auto.components.NewWorkspaceComposerCard.waitForSetupBeforeAgent',
                             'Wait for setup to complete before starting agent'
-                          )}
-                        </span>
-                        <span className="block text-[11px] text-muted-foreground">
-                          {translate(
-                            'auto.components.NewWorkspaceComposerCard.waitForSetupBeforeAgentHelp',
-                            'Turn this on when setup installs dependencies, MCP servers, or config files the agent needs during startup.'
                           )}
                         </span>
                       </span>
@@ -390,7 +389,9 @@ export function NewWorkspaceComposerAdvancedSection({
                 )}
               </label>
               <SparseCheckoutPresetSelect
+                key={repoId}
                 repoId={repoId}
+                onEditingChange={onSparseEditingChange}
                 presets={sparsePresets}
                 selectedPresetId={sparseSelectedPresetId}
                 onSelectPreset={onSparseSelectPreset}

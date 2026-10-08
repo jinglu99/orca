@@ -3,16 +3,12 @@ import { ipcMain, shell, dialog } from 'electron'
 import { constants, copyFile, readFile, stat } from 'node:fs/promises'
 import { basename, extname, isAbsolute, normalize, posix, win32 } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { existsSync, readFileSync, readdirSync } from 'node:fs'
-import { homedir } from 'node:os'
 import type {
-  DetectedOpenInApplication,
   ShellOpenExternalEditorRequest,
   ShellOpenExternalEditorResult,
   ShellOpenLocalPathResult
 } from '../../shared/shell-open-types'
-import { detectOpenInApplications } from '../open-in-app-detection'
-import { loadOpenInAppIcons } from '../open-in-app-icons'
+import { registerOpenInAppHandlers } from './open-in-app-handlers'
 import { MAX_REPO_ICON_UPLOAD_BYTES } from '../../shared/repo-icon'
 import type { Store } from '../persistence'
 import {
@@ -163,23 +159,7 @@ export function registerShellHandlers(store: Store): void {
     (_event, path: string): Promise<ShellOpenLocalPathResult> => openInFileManager(store, path)
   )
 
-  ipcMain.handle(
-    'shell:getOpenInAppIcons',
-    (_event, commands: string[]): Promise<Record<string, string>> =>
-      loadOpenInAppIcons(Array.isArray(commands) ? commands : [])
-  )
-
-  ipcMain.handle('shell:detectOpenInApplications', (): DetectedOpenInApplication[] =>
-    detectOpenInApplications({
-      platform: process.platform,
-      homePath: homedir(),
-      localAppData: process.env.LOCALAPPDATA ?? null,
-      pathEnv: process.env.PATH ?? process.env.Path ?? null,
-      fileExists: existsSync,
-      readDirectory: (directory) => readdirSync(directory),
-      readTextFile: (path) => readFileSync(path, 'utf8')
-    })
-  )
+  registerOpenInAppHandlers()
 
   ipcMain.handle(
     'shell:openInExternalEditor',
@@ -273,6 +253,15 @@ export function registerShellHandlers(store: Store): void {
       return null
     }
     return result.filePaths[0]
+  })
+
+  // Why: a separate plural handler, like repos:pickFolder/pickFolders — callers that
+  // must take exactly one file (the notebook interpreter picker) keep pickAttachment.
+  ipcMain.handle('shell:pickAttachments', async (): Promise<string[]> => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections']
+    })
+    return result.canceled ? [] : result.filePaths
   })
 
   // Why: window.prompt() and <input type="file"> are unreliable in Electron,
