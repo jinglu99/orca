@@ -88,6 +88,7 @@ export type ComposerCardActionProps = {
   onAgentPromptChange: ComposerModel['setAgentPrompt']
   linkedOnlyTemplatePreview: string | null
   getAttachmentLabel: (pathValue: string) => string
+  onNativeFileDrop?: ComposerModel['applyNativeDrop']
   onAddAttachment: () => void
   onRemoveAttachment: (pathValue: string) => void
   onRemoveLinkedWorkItem: ComposerModel['handleRemoveLinkedWorkItem']
@@ -104,7 +105,6 @@ export type ComposerCardActionProps = {
   onSelectedGroupMemberRepoIdsChange: (next: ReadonlySet<string> | null) => void
   onSkipGroupMemberBaseFetchChange: (next: boolean) => void
   createDisabled: boolean
-  onCreate: () => void
   onNoteChange: ComposerModel['setNote']
   onBaseBranchChange: ComposerModel['handleBaseBranchChange']
   onBaseBranchPrSelect: ComposerModel['handleBaseBranchPrSelect']

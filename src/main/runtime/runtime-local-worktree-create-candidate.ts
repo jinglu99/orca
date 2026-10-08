@@ -33,6 +33,7 @@ import {
   resolveCreateBranchName
 } from './runtime-worktree-create-git'
 import { runtimePathExists } from './runtime-worktree-filesystem'
+import { findPendingWorktreeRemovalConflict } from '../worktree-removal-table'
 import type { RuntimeStore } from './runtime-store-contract'
 import type { HostedReviewExecutionOptions } from '../source-control/hosted-review-git-options'
 
@@ -202,7 +203,12 @@ export async function resolveRuntimeLocalWorktreeCreateCandidate(args: {
       )
     // Why the guard: a pinned path was proven free above, and re-testing it would make every
     // remaining suffix attempt collide on the directory this create is about to make.
-    if (pinnedWorktreePath || !(await runtimePathExists(worktreePath))) {
+    // Why the pending check: Orca still owns this path until its background removal settles.
+    if (
+      pinnedWorktreePath ||
+      (!findPendingWorktreeRemovalConflict(args.repo.path, { worktreePath }) &&
+        !(await runtimePathExists(worktreePath)))
+    ) {
       worktreePathResolved = true
       break
     }

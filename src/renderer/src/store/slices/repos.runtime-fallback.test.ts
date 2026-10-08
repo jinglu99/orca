@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createTestStore } from './store-test-helpers'
 import type { Repo } from '../../../../shared/repo-types'
-import {
-  FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY,
-  RUNTIME_CAPABILITIES
-} from '../../../../shared/protocol-version'
+import { RUNTIME_CAPABILITIES } from '../../../../shared/protocol-version'
+import { FOLDER_WORKSPACE_PATH_STATUS_RUNTIME_CAPABILITY } from '../../../../shared/folder-workspace-runtime-capabilities'
 import {
   createCompatibleRuntimeStatusResponse,
   createCompatibleRuntimeStatusResponseIfNeeded,

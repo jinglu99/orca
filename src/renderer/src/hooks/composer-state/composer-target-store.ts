@@ -32,7 +32,6 @@ export type ComposerStateInput = {
   onRepoIdOverrideChange?: (value: string) => void
   telemetrySource?: WorkspaceCreateTelemetrySource
   enableIssueAutomation?: boolean
-  createGateMode?: 'full' | 'quick'
 }
 
 const NEVER_CANCEL_COMPOSER_SUBMIT = (): boolean => false
@@ -55,7 +54,6 @@ export function useComposerTargetStore(options: ComposerStateInput, decisions: C
     onRepoIdOverrideChange,
     telemetrySource,
     enableIssueAutomation = true,
-    createGateMode = 'full',
     initialProjectGroupId
   } = options
 
@@ -65,9 +63,7 @@ export function useComposerTargetStore(options: ComposerStateInput, decisions: C
       clearNewWorkspaceDraft: s.clearNewWorkspaceDraft,
       createWorktree: s.createWorktree,
       updateRepo: s.updateRepo,
-      updateWorktreeMeta: s.updateWorktreeMeta,
       createFolderWorkspace: s.createFolderWorkspace,
-      setSidebarOpen: s.setSidebarOpen,
       closeModal: s.closeModal,
       openSettingsPage: s.openSettingsPage,
       openSettingsTarget: s.openSettingsTarget,
@@ -83,9 +79,7 @@ export function useComposerTargetStore(options: ComposerStateInput, decisions: C
     clearNewWorkspaceDraft,
     createWorktree,
     updateRepo,
-    updateWorktreeMeta,
     createFolderWorkspace,
-    setSidebarOpen,
     closeModal,
     openSettingsPage,
     openSettingsTarget,
@@ -178,7 +172,6 @@ export function useComposerTargetStore(options: ComposerStateInput, decisions: C
     onRepoIdOverrideChange,
     telemetrySource,
     enableIssueAutomation,
-    createGateMode,
     initialProjectGroupId,
     decisions,
     actions,
@@ -186,9 +179,7 @@ export function useComposerTargetStore(options: ComposerStateInput, decisions: C
     clearNewWorkspaceDraft,
     createWorktree,
     updateRepo,
-    updateWorktreeMeta,
     createFolderWorkspace,
-    setSidebarOpen,
     closeModal,
     openSettingsPage,
     openSettingsTarget,

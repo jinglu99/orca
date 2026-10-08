@@ -7,12 +7,14 @@ import {
   MessagesSquare,
   PanelTopOpen,
   Play,
+  SquareTerminal,
   Trash2
 } from 'lucide-react'
 import { DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { ContextMenuItem, ContextMenuSeparator } from '@/components/ui/context-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
+import { ResumeInNewCliTooltipText } from './ai-vault-session-cli-fork-copy'
 
 export function SessionActionMenuItems({
   menuKind = 'dropdown',
@@ -22,6 +24,7 @@ export function SessionActionMenuItems({
   onResume,
   onContinueInNewSession,
   onResumeInNewChat,
+  onResumeInNewCli,
   onJumpToOriginalPane,
   showJumpToWorktree,
   onJumpToWorktree,
@@ -41,6 +44,8 @@ export function SessionActionMenuItems({
   onResume: () => void
   onContinueInNewSession?: () => void
   onResumeInNewChat?: () => void
+  // Offered only on rows native chat owns, where it forks: see ai-vault-session-cli-fork.
+  onResumeInNewCli?: () => void
   onJumpToOriginalPane?: () => void
   showJumpToWorktree: boolean
   onJumpToWorktree?: () => void
@@ -54,7 +59,7 @@ export function SessionActionMenuItems({
   onOpenCwd?: () => void
   // Null when Delete is offered; otherwise the tooltip explaining why it isn't.
   deleteBlockedReason: string | null
-  onDelete: () => void
+  onDelete?: () => void
 }) {
   const Item = menuKind === 'context' ? ContextMenuItem : DropdownMenuItem
   const Separator = menuKind === 'context' ? ContextMenuSeparator : DropdownMenuSeparator
@@ -104,10 +109,26 @@ export function SessionActionMenuItems({
         <Item onSelect={onResumeInNewChat}>
           <MessagesSquare className="size-3.5" />
           {translate(
-            'auto.components.right.sidebar.AiVaultSessionRow.resumeInNewChat',
-            'Resume in New Chat'
+            'auto.components.right.sidebar.AiVaultSessionRow.resumeInNewNativeChat',
+            'Resume in New Native Chat'
           )}
         </Item>
+      ) : null}
+      {onResumeInNewCli ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Item onSelect={onResumeInNewCli}>
+              <SquareTerminal className="size-3.5" />
+              {translate(
+                'auto.components.right.sidebar.AiVaultSessionRow.resumeInNewCli',
+                'Resume in New CLI'
+              )}
+            </Item>
+          </TooltipTrigger>
+          <TooltipContent side={menuKind === 'context' ? 'right' : 'left'} sideOffset={8}>
+            <ResumeInNewCliTooltipText />
+          </TooltipContent>
+        </Tooltip>
       ) : null}
       {onContinueInNewSession ? (
         <Item onSelect={onContinueInNewSession}>
@@ -168,25 +189,29 @@ export function SessionActionMenuItems({
           )}
         </Item>
       ) : null}
-      <Separator />
-      {deleteBlockedReason ? (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            {/* A disabled item is pointer-events:none, so the trigger needs this
+      {onDelete ? (
+        <>
+          <Separator />
+          {deleteBlockedReason ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* A disabled item is pointer-events:none, so the trigger needs this
                wrapper to receive hover (as WorktreeContextMenu does). */}
-            <div>{deleteItem}</div>
-          </TooltipTrigger>
-          <TooltipContent
-            side={menuKind === 'context' ? 'right' : 'left'}
-            sideOffset={8}
-            className="max-w-72"
-          >
-            {deleteBlockedReason}
-          </TooltipContent>
-        </Tooltip>
-      ) : (
-        deleteItem
-      )}
+                <div>{deleteItem}</div>
+              </TooltipTrigger>
+              <TooltipContent
+                side={menuKind === 'context' ? 'right' : 'left'}
+                sideOffset={8}
+                className="max-w-72"
+              >
+                {deleteBlockedReason}
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            deleteItem
+          )}
+        </>
+      ) : null}
     </>
   )
 }
