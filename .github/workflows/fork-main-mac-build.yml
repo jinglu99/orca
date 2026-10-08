@@ -90,11 +90,12 @@ jobs:
           " >>"$GITHUB_OUTPUT"
 
       - name: Package DMG
-        run: node config/scripts/ensure-native-runtime.mjs --runtime=electron && pnpm exec electron-builder --config config/electron-builder.config.cjs --mac dmg --arm64 --publish never
+        # Why identity '-': with no Developer ID, electron-builder skips signing entirely and
+        # leaves Electron's linker signature, whose missing resource seal reads as "damaged".
+        run: node config/scripts/ensure-native-runtime.mjs --runtime=electron && pnpm exec electron-builder --config config/electron-builder.config.cjs --mac dmg --arm64 --publish never -c.mac.identity=-
         env:
           ORCA_BUILD_COMMIT: ${{ steps.identity.outputs.commit }}
           ORCA_LOCAL_BUILD_VERSION: ${{ steps.identity.outputs.version }}
-          # No Developer ID here; let electron-builder ad-hoc sign instead of hunting the keychain.
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: Publish prerelease
