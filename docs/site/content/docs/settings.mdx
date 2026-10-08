@@ -157,6 +157,7 @@ Settings are grouped into panes. Everything here is searchable with `Cmd-,` then
 
 - **Plugin system** — Settings → Plugins. Turn the system on, then review and enable each plugin individually. Nothing runs until you consent.
 - **Marketplaces** — add a git marketplace source, browse plugins, preview capabilities (panels, commands, language packs, VM recipes), install, update, or roll back.
+- **Task sources** — a plugin can add a source to the Tasks page (`contributes.taskProviders`). Its items list, preview, and start workspaces like built-in sources. See `examples/plugins/meego-tasks` for a Meego source backed by `bytedcli`.
 - Plugin workers always run on this computer; SSH workspace actions still route through Orca.
 - Capability and API shapes may change; treat third-party plugins as untrusted software.
 

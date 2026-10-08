@@ -1,5 +1,6 @@
 import type { TaskPageJiraIssueCreationModel } from './use-task-page-jira-issue-creation'
 import { useEffect } from 'react'
+import { usePluginTaskSourceSelection } from '@/store/plugin-task-sources'
 export function useTaskPageGlobalEffects(model: TaskPageJiraIssueCreationModel) {
   const {
     closeTaskPage,
@@ -27,6 +28,7 @@ export function useTaskPageGlobalEffects(model: TaskPageJiraIssueCreationModel) 
     newJiraIssueOpen
   } = model
   const githubTasksBusy = tasksLoading || tasksRefreshing || tasksFiltering
+  const pluginTaskDetailOpen = usePluginTaskSourceSelection((s) => s.openItem !== null)
   useEffect(() => {
     // Why: when a modal is open, let it own Esc dismissal.
     if (
@@ -36,6 +38,7 @@ export function useTaskPageGlobalEffects(model: TaskPageJiraIssueCreationModel) 
       newIssueOpen ||
       newLinearIssueOpen ||
       newJiraIssueOpen ||
+      pluginTaskDetailOpen ||
       activeModal !== 'none'
     ) {
       return
@@ -86,6 +89,7 @@ export function useTaskPageGlobalEffects(model: TaskPageJiraIssueCreationModel) 
     newIssueOpen,
     newLinearIssueOpen,
     newJiraIssueOpen,
+    pluginTaskDetailOpen,
     selectedLinearIssue,
     selectedJiraIssue
   ])

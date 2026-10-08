@@ -9,6 +9,7 @@ import {
 import { PER_REPO_FETCH_LIMIT } from '../../../../../shared/work-items'
 import { isGitRepoKind } from '../../../../../shared/repo-kind'
 import { presetToQuery } from './ui-slice-hydration-sanitizers'
+import { usePluginTaskSourceSelection } from '../../plugin-task-sources'
 
 const LINEAR_TASK_PREFETCH_LIMIT = 36
 
@@ -97,6 +98,11 @@ export function createUiTaskActions(set: UISliceSet, get: UISliceGet): Partial<U
       }
       if (detailEntry) {
         get().recordViewVisit(detailEntry)
+      }
+      // Why: an explicit built-in source or item (source bar, sidebar shortcut,
+      // deep link) leaves plugin-source mode; a bare open keeps it.
+      if (data.taskSource || detailEntry) {
+        usePluginTaskSourceSelection.getState().select(null)
       }
       set((state) => ({
         activeView: 'tasks',

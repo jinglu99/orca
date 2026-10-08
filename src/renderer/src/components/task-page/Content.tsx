@@ -6,6 +6,8 @@ import { TaskPageGitHubList } from './github/List'
 import { TaskPageGitLabTodoList } from './gitlab/TodoList'
 import { TaskPageGitLabItemList } from './gitlab/ItemList'
 import { TaskPageJiraContent } from './jira/Content'
+import { TaskPagePluginContent } from './plugin/Content'
+import { useActivePluginTaskSource } from '@/store/plugin-task-sources'
 export function TaskPageContent({
   model
 }: {
@@ -25,6 +27,15 @@ export function TaskPageContent({
     closeTaskDetailPage,
     handleUseWorkItem
   } = model
+  const activePluginSource = useActivePluginTaskSource()
+  if (activePluginSource.source || activePluginSource.pending) {
+    return (
+      <TaskPagePluginContent
+        source={activePluginSource.source}
+        pending={activePluginSource.pending}
+      />
+    )
+  }
   return taskSource === 'github' && dialogWorkItem ? (
     dialogWorkItem.type === 'pr' ? (
       <PullRequestPage
