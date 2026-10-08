@@ -45,8 +45,13 @@ export type PluginWorkerRuntime = {
   handleMessage(raw: unknown): Promise<void>
 }
 
+// Why: the parent drops worker messages whose error exceeds 8192 chars, which
+// would leave the caller waiting for the invoke timeout instead of failing.
+const WORKER_ERROR_MAX_LENGTH = 8192
+
 function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? (error.stack ?? error.message) : String(error)
+  const message = error instanceof Error ? (error.stack ?? error.message) : String(error)
+  return message.slice(0, WORKER_ERROR_MAX_LENGTH)
 }
 
 export function createPluginWorkerRuntime(
@@ -193,7 +198,7 @@ export function createPluginWorkerRuntime(
             try {
               await deactivate?.()
             } catch (error) {
-              send({ type: 'log', level: 'error', message: toErrorMessage(error).slice(0, 8192) })
+              send({ type: 'log', level: 'error', message: toErrorMessage(error) })
             }
             exit(0)
           }
