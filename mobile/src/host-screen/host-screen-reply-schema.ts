@@ -16,6 +16,7 @@ export const WORKSPACE_SORT_BY_ARMS = hostUnionArms<PersistedUIState['sortBy']>(
   name: true,
   smart: true,
   recent: true,
+  visited: true,
   repo: true,
   manual: true
 })

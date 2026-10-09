@@ -13,6 +13,12 @@ import type { ProjectGroupingModel } from '../grouping/project-grouping'
 import type { PinnedWorktreeDisplayPolicy, WorktreeGroupBy } from '../grouping/row-types'
 import { getFolderWorkspaceRevealGroupKeys } from './folder-reveal'
 import { getWorktreeRevealCollapsedGroupKeys } from './worktree-reveal-group-keys'
+import { useAppStore } from '@/store'
+import { getWorktreeHostIdentity } from '../../../../../../shared/worktree/host-qualified-identity'
+import {
+  buildFlatWorkspaceNesting,
+  getFolderMembersExpandedKey
+} from '../grouping/flat-workspace-nesting'
 
 export const MAX_REVEAL_RETRIES = 8
 
@@ -88,6 +94,18 @@ export function expandGroupsForWorktreeReveal(
     hostScopedGroups
   })) {
     args.toggleGroup(groupKey)
+  }
+  // Why: in the flat list a group workspace member hides under its collapsed folder row.
+  const folderId = buildFlatWorkspaceNesting({
+    groupBy: args.groupBy,
+    sortBy: 'name',
+    workspaceLineageByChildKey: useAppStore.getState().workspaceLineageByChildKey,
+    worktreeLineageById: args.worktreeLineageById,
+    worktreeMap: args.worktreeMap,
+    lastVisitedAtByWorktreeId: {}
+  })?.folderIdByMemberIdentity.get(getWorktreeHostIdentity(targetWorktree))
+  if (folderId && !args.collapsedGroups.has(getFolderMembersExpandedKey(folderId))) {
+    args.toggleGroup(getFolderMembersExpandedKey(folderId))
   }
 }
 

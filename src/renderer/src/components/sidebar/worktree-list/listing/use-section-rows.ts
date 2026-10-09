@@ -12,6 +12,7 @@ import type { ExecutionHostId } from '../../../../../../shared/execution-host'
 import { folderWorkspaceKey } from '../../../../../../shared/workspace-scope'
 import { getHostDisplayLabelOverrides } from '../../../../../../shared/host-setting-overrides'
 import { buildRows } from '../grouping/build-rows'
+import { buildFlatWorkspaceNesting } from '../grouping/flat-workspace-nesting'
 import type { ProjectGroupingModel } from '../grouping/project-grouping'
 import type { PinnedWorktreeDisplayPolicy, Row, WorktreeGroupBy } from '../grouping/row-types'
 import { getLogicalRepoOrderRankById } from '../../project-header-drop'
@@ -47,6 +48,8 @@ type SectionRowsArgs = {
   workspaceHostScope: AppState['workspaceHostScope']
 }
 
+const EMPTY_VISITS: Readonly<Record<string, number>> = Object.freeze({})
+
 function collectRenderedSidebarRowKeys(sectionRows: ReturnType<typeof addHostSectionRows>) {
   const keys = new Set<string>()
   for (const row of sectionRows) {
@@ -78,6 +81,31 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
   const runtimeStatusByEnvironmentId = useAppStore((s) => s.runtimeStatusByEnvironmentId)
   const workspaceHostOrder = useAppStore((s) => s.workspaceHostOrder)
   const setWorkspaceHostOrder = useAppStore((s) => s.setWorkspaceHostOrder)
+  const sortBy = useAppStore((s) => s.sortBy)
+  const workspaceLineageByChildKey = useAppStore((s) => s.workspaceLineageByChildKey)
+  // Why gated: visits only reorder rows in flat Recently used; elsewhere they must not rebuild rows.
+  const lastVisitedAtByWorktreeId = useAppStore((s) =>
+    args.groupBy === 'none' && s.sortBy === 'visited' ? s.lastVisitedAtByWorktreeId : EMPTY_VISITS
+  )
+  const flatWorkspaceNesting = useMemo(
+    () =>
+      buildFlatWorkspaceNesting({
+        groupBy: args.groupBy,
+        sortBy,
+        workspaceLineageByChildKey,
+        worktreeLineageById: args.worktreeLineageById,
+        worktreeMap: args.worktreeMap,
+        lastVisitedAtByWorktreeId
+      }),
+    [
+      args.groupBy,
+      sortBy,
+      workspaceLineageByChildKey,
+      args.worktreeLineageById,
+      args.worktreeMap,
+      lastVisitedAtByWorktreeId
+    ]
+  )
 
   // Why: manual header order is bound to state.repos; Recent/Smart derive order from the sorted worktree stream.
   const repoOrder = useMemo(
@@ -177,7 +205,8 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
         args.visibleFolderWorkspacesForRows,
         hostLabelById,
         defaultHostId,
-        args.pinnedDisplayPolicy
+        args.pinnedDisplayPolicy,
+        flatWorkspaceNesting
       ),
     [
       args.groupBy,
@@ -200,7 +229,8 @@ export function useSidebarSectionRows(args: SectionRowsArgs) {
       args.newExternalWorktreesInboxByRepo,
       pendingCreations,
       hostLabelById,
-      args.pinnedDisplayPolicy
+      args.pinnedDisplayPolicy,
+      flatWorkspaceNesting
     ]
   )
   const orderedHostOptions = useMemo(

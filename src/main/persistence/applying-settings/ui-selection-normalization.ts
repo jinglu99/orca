@@ -41,6 +41,7 @@ export function normalizeSortBy(sortBy: unknown): PersistedState['ui']['sortBy']
   if (
     sortBy === 'smart' ||
     sortBy === 'recent' ||
+    sortBy === 'visited' ||
     sortBy === 'repo' ||
     sortBy === 'name' ||
     sortBy === 'manual'

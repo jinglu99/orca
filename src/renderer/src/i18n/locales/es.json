@@ -5389,6 +5389,8 @@
           "keepDefaultBranchAria": "Mantener visible la rama predeterminada al ocultar los espacios de trabajo en reposo"
         },
         "SidebarHeader": {
+          "collapseAllChildWorkspaces": "Contraer todos los espacios de trabajo secundarios",
+          "expandAllChildWorkspaces": "Expandir todos los espacios de trabajo secundarios",
           "projects": "Proyectos",
           "92154beb7e": "Nuevo espacio de trabajo",
           "49f62c5665": "Tablero de espacios de trabajo",
@@ -5478,6 +5480,8 @@
           "bc96dbd041": "Opciones de espacio de trabajo ({{value0}})",
           "af9249c505": "Actividad más reciente en el espacio de trabajo",
           "b451c8b162": "Reciente",
+          "recentlyUsed": "Usados recientemente",
+          "recentlyUsedDescription": "Los espacios de trabajo a los que cambiaste más recientemente aparecen primero.",
           "6664282a7b": "Arrastra proyectos para organizarlos",
           "7b316bdd51": "Manual",
           "7153d07485": "Arrastra los espacios de trabajo para organizarlos dentro de cada grupo.",
@@ -18867,6 +18871,7 @@
   },
   "dashboard": {
     "sidebar": {
+      "panel": "Panel de la barra lateral",
       "label": "Agentes",
       "dashboardLabel": "Panel de agentes",
       "openActivity": "Ver actividad",

@@ -8,6 +8,7 @@ import {
   getSidebarProjectCollapseKeys
 } from './sidebar-project-collapse-keys'
 import { EMPTY_PROJECT_GROUPS } from './worktree-list/viewport/viewport-props'
+import { getFolderMembersExpandedKeys } from './worktree-list/grouping/flat-workspace-nesting'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatOptionalPrimaryShortcutLabel } from '@/hooks/useShortcutLabel'
@@ -95,6 +96,9 @@ function CollapseProjectsButton({
   const projectGroups = useAppStore((s) => s.projectGroups ?? EMPTY_PROJECT_GROUPS)
   const collapsedGroups = useAppStore((s) => s.collapsedGroups)
   const setCollapsedGroups = useAppStore((s) => s.setCollapsedGroups)
+  const groupBy = useAppStore((s) => s.groupBy)
+  const workspaceLineageByChildKey = useAppStore((s) => s.workspaceLineageByChildKey)
+  const folderWorkspaces = useAppStore((s) => s.folderWorkspaces)
   const projectHostSetupProjection = useProjectHostSetupProjection()
   const projectKeys = useMemo(
     () =>
@@ -108,20 +112,44 @@ function CollapseProjectsButton({
       }),
     [projectGroups, projectHostSetupProjection, repos]
   )
-  const allCollapsed = areAllSidebarProjectsCollapsed(projectKeys, collapsedGroups)
-  const label = allCollapsed
-    ? translate('auto.components.sidebar.SidebarHeader.expandAllProjects', 'Expand all projects')
-    : translate(
-        'auto.components.sidebar.SidebarHeader.collapseAllProjects',
-        'Collapse all projects'
-      )
+  // Why: the flat Workspaces panel has no project headers; there the sweep folds group members.
+  const folderKeys = useMemo(
+    () =>
+      groupBy === 'none'
+        ? getFolderMembersExpandedKeys(workspaceLineageByChildKey, folderWorkspaces ?? [])
+        : null,
+    [folderWorkspaces, groupBy, workspaceLineageByChildKey]
+  )
+  const allCollapsed = folderKeys
+    ? folderKeys.every((key) => !collapsedGroups.has(key))
+    : areAllSidebarProjectsCollapsed(projectKeys, collapsedGroups)
+  const label = folderKeys
+    ? allCollapsed
+      ? translate(
+          'auto.components.sidebar.SidebarHeader.expandAllChildWorkspaces',
+          'Expand all child workspaces'
+        )
+      : translate(
+          'auto.components.sidebar.SidebarHeader.collapseAllChildWorkspaces',
+          'Collapse all child workspaces'
+        )
+    : allCollapsed
+      ? translate('auto.components.sidebar.SidebarHeader.expandAllProjects', 'Expand all projects')
+      : translate(
+          'auto.components.sidebar.SidebarHeader.collapseAllProjects',
+          'Collapse all projects'
+        )
   const handleClick = useCallback(() => {
+    if (folderKeys) {
+      // Folder keys mark expansion, so expanding adds them.
+      setCollapsedGroups(applySidebarProjectCollapse(folderKeys, collapsedGroups, allCollapsed))
+      return
+    }
     setCollapsedGroups(applySidebarProjectCollapse(projectKeys, collapsedGroups, !allCollapsed))
-  }, [allCollapsed, collapsedGroups, projectKeys, setCollapsedGroups])
+  }, [allCollapsed, collapsedGroups, folderKeys, projectKeys, setCollapsedGroups])
 
-  // Why hidden with no projects: the sweep would have nothing to act on, and a control that
-  // cannot change anything reads as broken rather than as unavailable.
-  if (projectKeys.length === 0) {
+  // Why hidden with nothing to sweep: a control that cannot change anything reads as broken.
+  if ((folderKeys ?? projectKeys).length === 0) {
     return null
   }
   const Icon = allCollapsed ? ChevronsUpDown : ChevronsDownUp

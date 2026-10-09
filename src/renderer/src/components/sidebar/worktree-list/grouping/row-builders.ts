@@ -110,6 +110,8 @@ export function appendWorktreeRows(
     hostContextLabelByRepoId?: ReadonlyMap<string, string>
     hostContextLabelByWorktreeIdentity?: ReadonlyMap<string, string>
     cyclicLineageIds: ReadonlySet<string>
+    /** Depth of the top-level rows; 1 nests them under a folder workspace row. */
+    rootDepth?: number
   }
 ): void {
   const {
@@ -119,18 +121,21 @@ export function appendWorktreeRows(
     sectionKey,
     hostContextLabelByRepoId,
     hostContextLabelByWorktreeIdentity,
-    cyclicLineageIds
+    cyclicLineageIds,
+    rootDepth = 0
   } = options
+  const rootTrail = (index: number, count: number): boolean[] =>
+    rootDepth > 0 ? [index < count - 1] : []
   if (!nestLineage) {
-    for (const worktree of worktrees) {
+    for (const [index, worktree] of worktrees.entries()) {
       result.push(
         buildWorktreeRow(worktree, repoMap, {
           rowKey: `${sectionKey}:${getWorktreeHostIdentity(worktree)}`,
           sectionKey,
-          depth: 0,
+          depth: rootDepth,
           groupDepth,
-          lineageTrail: [],
-          isLastLineageChild: false,
+          lineageTrail: rootTrail(index, worktrees.length),
+          isLastLineageChild: rootDepth > 0 && index === worktrees.length - 1,
           lineageChildCount: 0,
           lineageCollapsed: false,
           hostContextLabel:
@@ -228,14 +233,14 @@ export function appendWorktreeRows(
     (worktree) => !childIdentities.has(getWorktreeHostIdentity(worktree))
   )
   for (const [index, worktree] of roots.entries()) {
-    emit(worktree, 0, [], index === roots.length - 1)
+    emit(worktree, rootDepth, rootTrail(index, roots.length), index === roots.length - 1)
   }
   if (roots.length === 0) {
     for (const worktree of worktrees) {
       if (!emitted.has(getWorktreeHostIdentity(worktree))) {
         // Why: malformed cyclic lineage should not hide every participant.
         // Render any leftovers as roots rather than recursing forever.
-        emit(worktree, 0, [], true)
+        emit(worktree, rootDepth, rootTrail(0, 1), true)
       }
     }
   }
@@ -245,7 +250,8 @@ export function appendWorktreeRows(
  *  grouped-lane and flat emitters so their rows cannot diverge. */
 export function buildFolderWorkspaceRow(
   pair: RenderableFolderWorkspace,
-  groupDepth: number
+  groupDepth: number,
+  members?: Pick<FolderWorkspaceRow, 'lineageChildCount' | 'lineageGroupKey' | 'lineageCollapsed'>
 ): FolderWorkspaceRow {
   return {
     type: 'folder-workspace',
@@ -253,6 +259,7 @@ export function buildFolderWorkspaceRow(
     folderWorkspace: pair.folderWorkspace,
     projectGroup: pair.projectGroup,
     depth: 0,
-    groupDepth
+    groupDepth,
+    ...members
   }
 }

@@ -137,7 +137,7 @@ export const UiUpdateFields = z
     combinedDiffFileTreeWidth: z.number().finite().optional(),
     groupBy: z.enum(['none', 'workspace-status', 'repo', 'pr-status']).optional(),
     showWorkspaceLineage: z.boolean().optional(),
-    sortBy: z.enum(['name', 'smart', 'recent', 'repo', 'manual']).optional(),
+    sortBy: z.enum(['name', 'smart', 'recent', 'visited', 'repo', 'manual']).optional(),
     projectOrderBy: z.enum(['manual', 'recent']).optional(),
     showActiveOnly: z.boolean().optional(),
     hideSleepingWorkspaces: z.boolean().optional(),

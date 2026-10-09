@@ -19,6 +19,7 @@ import { getFolderWorkspaceCardPrDisplay } from '../../folder-workspace-card-pr-
 import { FolderPathStatusIndicator } from './FolderPathStatusIndicator'
 import type { FolderWorkspaceItemRow } from '../listing/renderable-rows'
 import { getWorktreeOptionId } from './option-dom'
+import type { LineageToggleHandler } from '../../worktree-lineage-toggle-handler-cache'
 
 export type FolderWorkspaceRowContext = {
   groupBy: WorktreeGroupBy
@@ -44,6 +45,7 @@ export type FolderWorkspaceRowContext = {
   ) => readonly Worktree[]
   onImmediateActivate: (worktreeId: string, rowKey: string | undefined) => void
   onRowClickCapture: (event: React.MouseEvent<HTMLDivElement>) => void
+  getLineageToggleHandler: (groupKey: string) => LineageToggleHandler
   onRowPointerDown: (
     event: React.PointerEvent<HTMLDivElement>,
     worktree: Worktree,
@@ -122,6 +124,11 @@ export function renderFolderWorkspaceVirtualRow(args: {
           onSelectionGesture={(event) => ctx.onSelectionGesture(event, folderWorktree)}
           onContextMenuSelect={ctx.onContextMenuSelect}
           statusPrDisplay={folderPrDisplay}
+          lineageChildCount={row.lineageChildCount ?? 0}
+          lineageCollapsed={row.lineageCollapsed ?? false}
+          onLineageToggle={
+            row.lineageGroupKey ? ctx.getLineageToggleHandler(row.lineageGroupKey) : undefined
+          }
         />
         <div className="pointer-events-auto absolute right-3 top-1.5">
           <FolderPathStatusIndicator status={pathStatus} />

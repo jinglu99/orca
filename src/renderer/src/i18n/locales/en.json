@@ -5660,6 +5660,8 @@
           "keepDefaultBranchAria": "Keep the default branch visible while hiding sleeping workspaces"
         },
         "SidebarHeader": {
+          "collapseAllChildWorkspaces": "Collapse all child workspaces",
+          "expandAllChildWorkspaces": "Expand all child workspaces",
           "projects": "Projects",
           "spaces": "Spaces",
           "92154beb7e": "New workspace",
@@ -5768,6 +5770,8 @@
           "bc96dbd041": "Workspace options ({{value0}})",
           "af9249c505": "Most recent workspace activity",
           "b451c8b162": "Recent",
+          "recentlyUsed": "Recently used",
+          "recentlyUsedDescription": "Workspaces you switched to most recently come first.",
           "6664282a7b": "Drag projects to arrange them",
           "7b316bdd51": "Manual",
           "7153d07485": "Drag workspaces to arrange them within each group.",
@@ -19097,6 +19101,7 @@
   },
   "dashboard": {
     "sidebar": {
+      "panel": "Sidebar panel",
       "label": "Agents",
       "dashboardLabel": "Agent Dashboard",
       "openActivity": "View activity",

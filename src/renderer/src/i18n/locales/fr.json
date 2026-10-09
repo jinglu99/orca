@@ -5509,6 +5509,8 @@
           "keepDefaultBranchAria": "Garder la branche par défaut visible tout en masquant les espaces de travail en veille"
         },
         "SidebarHeader": {
+          "collapseAllChildWorkspaces": "Réduire tous les espaces de travail enfants",
+          "expandAllChildWorkspaces": "Développer tous les espaces de travail enfants",
           "92154beb7e": "Nouvel espace de travail",
           "49f62c5665": "Tableau des espaces de travail",
           "5c9c7c16aa": "Ajoutez un projet pour créer des espaces de travail",
@@ -5614,6 +5616,8 @@
           "bc96dbd041": "Options des espaces de travail ({{value0}})",
           "af9249c505": "Activité d'espace de travail la plus récente",
           "b451c8b162": "Récents",
+          "recentlyUsed": "Utilisés récemment",
+          "recentlyUsedDescription": "Les espaces de travail que vous avez ouverts le plus récemment apparaissent en premier.",
           "6664282a7b": "Glissez les projets pour les ranger",
           "7b316bdd51": "Manuel",
           "7153d07485": "Glissez les espaces de travail pour les ranger au sein de chaque groupe.",
@@ -18968,6 +18972,7 @@
   },
   "dashboard": {
     "sidebar": {
+      "panel": "Panneau de la barre latérale",
       "label": "Tableau de bord des agents",
       "dashboardLabel": "Tableau de bord des agents",
       "openActivity": "Afficher l'activité",

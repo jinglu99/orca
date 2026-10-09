@@ -110,7 +110,7 @@ function parentPrChecksRowToCardDisplay(row: ParentPrChecksRow): WorktreeCardPrD
   }
 }
 
-function getWorkspaceLineageChild(
+export function getWorkspaceLineageChild(
   lineage: WorkspaceLineage,
   worktreeMap: ReadonlyMap<string, Worktree>
 ): Worktree | null {

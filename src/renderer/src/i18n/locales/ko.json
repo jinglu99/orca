@@ -5370,6 +5370,8 @@
           "keepDefaultBranchAria": "슬립 중인 워크스페이스를 숨겨도 기본 브랜치는 계속 표시"
         },
         "SidebarHeader": {
+          "collapseAllChildWorkspaces": "모든 하위 작업 공간 접기",
+          "expandAllChildWorkspaces": "모든 하위 작업 공간 펼치기",
           "projects": "프로젝트",
           "92154beb7e": "새로운 워크스페이스",
           "49f62c5665": "워크스페이스 보드",
@@ -5459,6 +5461,8 @@
           "bc96dbd041": "워크스페이스 옵션({{value0}})",
           "af9249c505": "가장 최근의 워크스페이스 활동",
           "b451c8b162": "최근",
+          "recentlyUsed": "최근 사용",
+          "recentlyUsedDescription": "최근에 전환한 작업 공간이 맨 앞에 표시됩니다.",
           "6664282a7b": "프로젝트를 드래그하여 정렬하세요.",
           "7b316bdd51": "수동",
           "7153d07485": "워크스페이스를 드래그하여 각 그룹 내에서 정렬하세요.",
@@ -18867,6 +18871,7 @@
   },
   "dashboard": {
     "sidebar": {
+      "panel": "사이드바 패널",
       "label": "에이전트",
       "dashboardLabel": "에이전트 대시보드",
       "openActivity": "활동 보기",

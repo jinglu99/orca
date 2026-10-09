@@ -24,15 +24,9 @@ import type { ProjectGroupingModel } from './project-grouping'
 import { appendProjectGroupSections } from './project-group-sections'
 import { getPinnedSectionWorktrees } from '../../pinned-section-worktrees'
 import { emitPinnedGroup } from './pinned-group-rows'
-import {
-  appendWorktreeRows,
-  buildFolderWorkspaceRow,
-  buildPendingCreationRow
-} from './row-builders'
-import {
-  compareFolderWorkspacesForDisplay,
-  getRenderableFolderWorkspaces
-} from './folder-workspace-lanes'
+import { appendWorktreeRows, buildPendingCreationRow } from './row-builders'
+import { getRenderableFolderWorkspaces } from './folder-workspace-lanes'
+import { appendFlatWorkspaceRows, type FlatWorkspaceNesting } from './flat-workspace-nesting'
 import { getPinnedWorktreeDisplayPolicy } from './row-types'
 import type {
   ImportedWorktreesCardCandidate,
@@ -70,7 +64,8 @@ export function buildRows(
   folderWorkspaces: readonly FolderWorkspace[] = [],
   hostLabelById?: ReadonlyMap<string, string>,
   defaultHostId: ExecutionHostId = LOCAL_EXECUTION_HOST_ID,
-  pinnedDisplayPolicy: PinnedWorktreeDisplayPolicy = getPinnedWorktreeDisplayPolicy(settings)
+  pinnedDisplayPolicy: PinnedWorktreeDisplayPolicy = getPinnedWorktreeDisplayPolicy(settings),
+  flatWorkspaceNesting?: FlatWorkspaceNesting
 ): Row[] {
   const result: Row[] = []
   const projectIndex = buildProjectGroupingIndex(projectGrouping)
@@ -177,19 +172,23 @@ export function buildRows(
         worktreeIds: naturalWorktrees.map((worktree) => worktree.id)
       })
       if (!collapsedGroups.has(ALL_GROUP_KEY)) {
-        appendWorktreeRows(result, naturalWorktrees, repoMap, lineageById, worktreeMap, {
-          nestLineage,
+        appendFlatWorkspaceRows({
+          result,
+          worktrees: naturalWorktrees,
+          folderPairs: renderableFolderWorkspaces,
+          nesting: flatWorkspaceNesting,
           collapsedGroups,
-          groupDepth: 0,
-          sectionKey: ALL_GROUP_KEY,
-          hostContextLabelByWorktreeIdentity: mixedWorktreeHostContextLabels,
-          cyclicLineageIds
+          appendWorktrees: (target, worktreesToAppend, rootDepth) =>
+            appendWorktreeRows(target, worktreesToAppend, repoMap, lineageById, worktreeMap, {
+              nestLineage,
+              collapsedGroups,
+              groupDepth: 0,
+              sectionKey: ALL_GROUP_KEY,
+              hostContextLabelByWorktreeIdentity: mixedWorktreeHostContextLabels,
+              cyclicLineageIds,
+              rootDepth
+            })
         })
-        for (const pair of [...renderableFolderWorkspaces].sort((left, right) =>
-          compareFolderWorkspacesForDisplay(left.folderWorkspace, right.folderWorkspace)
-        )) {
-          result.push(buildFolderWorkspaceRow(pair, 0))
-        }
       }
     }
     return result
