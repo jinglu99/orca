@@ -159,3 +159,18 @@ export const getTerminalSetupScriptSearchEntries = createLocalizedCatalog(() => 
     ]
   }
 ])
+
+export const getTerminalEnvironmentSearchEntries = createLocalizedCatalog(() => [
+  {
+    title: translate('settings.terminalEnvironment.title', 'Environment Variables'),
+    description: translate(
+      'settings.terminalEnvironment.description',
+      'Variables added to every new terminal on this computer, in all workspaces.'
+    ),
+    keywords: [
+      ...translateSearchKeyword('settings.terminalEnvironment.keywordEnv', 'env'),
+      ...translateSearchKeyword('settings.terminalEnvironment.keywordEnvironment', 'environment'),
+      ...translateSearchKeyword('settings.terminalEnvironment.keywordVariables', 'variables')
+    ]
+  }
+])

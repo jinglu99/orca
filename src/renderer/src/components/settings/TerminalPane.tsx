@@ -15,6 +15,7 @@ import {
   getTerminalMacOptionSearchEntries,
   getTerminalMacYenSearchEntries,
   getTerminalPaneInteractionSearchEntries,
+  getTerminalEnvironmentSearchEntries,
   getTerminalRenderingSearchEntries,
   getTerminalSetupScriptSearchEntries
 } from './terminal-search'
@@ -25,6 +26,7 @@ import {
 } from './terminal-windows-search'
 import { ManageSessionsSection } from './ManageSessionsSection'
 import { TerminalAdvancedSection } from './TerminalAdvancedSection'
+import { TerminalEnvironmentSection } from './TerminalEnvironmentSection'
 import { TerminalInteractionSection } from './TerminalInteractionSection'
 import { TerminalRenderingSection } from './TerminalRenderingSection'
 import { TerminalSetupScriptSection } from './TerminalSetupScriptSection'
@@ -328,6 +330,13 @@ export function TerminalPane({
     matchesSettingsSearch(searchQuery, getTerminalSetupScriptSearchEntries()) ? (
       <TerminalSetupScriptSection
         key="setup-script"
+        settings={settings}
+        updateSettings={updateSettings}
+      />
+    ) : null,
+    matchesSettingsSearch(searchQuery, getTerminalEnvironmentSearchEntries()) ? (
+      <TerminalEnvironmentSection
+        key="environment"
         settings={settings}
         updateSettings={updateSettings}
       />

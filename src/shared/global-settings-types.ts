@@ -431,6 +431,8 @@ export type GlobalSettings = NativeChatGlobalSettings & {
   codexTerminalServerIsolation?: boolean
   /** Off hides the banner on a typed `codex` that joined Codex's shared server. Absent reads as on. */
   codexSharedServerWarning?: boolean
+  /** Extra variables for every new local terminal, under each launch's own env; SSH terminals skip them. */
+  terminalEnvironmentVariables?: Record<string, string>
   /** Dismissed freshness tuples: no write authority, just suppress re-nudging the same official placement/revision. */
   dismissedSkillFreshnessNudges?: string[]
   /** Why: generated tab titles are subjective, so they stay opt-in and manual renames win. */
