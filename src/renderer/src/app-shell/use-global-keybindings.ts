@@ -38,6 +38,7 @@ import {
   type AppShortcutState,
   type ShortcutDispatchInput
 } from './app-command-handlers'
+import { openOrcaAssistant } from '@/lib/orca-assistant'
 import type { AppChromeLayout } from './use-app-chrome-layout'
 import type { FloatingWorkspacePanelState } from './use-floating-workspace-panel'
 
@@ -184,6 +185,13 @@ export function useGlobalKeybindings(args: {
       ) {
         input.preventDefault()
         openFloatingWorkspaceMaximized()
+        return
+      }
+
+      // Why before the floating-panel guards: the assistant opens from anywhere, panel focus included.
+      if (matchShortcut('orcaAssistant.open')) {
+        input.preventDefault()
+        void openOrcaAssistant()
         return
       }
 

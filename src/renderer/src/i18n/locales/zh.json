@@ -5407,7 +5407,8 @@
           "fee535205b": "任务",
           "d599269755": "从侧边栏隐藏",
           "artifacts": "工件",
-          "skills": "技能"
+          "skills": "技能",
+          "orcaAssistant": "Orca 助手"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "清除",
@@ -19496,5 +19497,32 @@
   },
   "projectField": {
     "updateFailed": "无法更新项目字段"
+  },
+  "orcaAssistant": {
+    "attentionPrompt": "我的哪些智能体现在在等我或被卡住了？每个需要我做什么？",
+    "quickAction": {
+      "open": "询问 Orca 助手",
+      "openDescription": "与能查看并操作你的工作树和智能体的助手对话。",
+      "verbs": {
+        "assistant": "助手",
+        "ask": "问 orca",
+        "bot": "机器人",
+        "waiting": "等待中的智能体",
+        "blocked": "被卡住的智能体",
+        "needsAttention": "需要处理"
+      },
+      "attention": "哪些智能体在等我？",
+      "attentionDescription": "让 Orca 助手告诉你哪些智能体在等你、需要什么。"
+    },
+    "attention": "{{count}} 个智能体在等你，问问 Orca 助手它们需要什么。",
+    "page": {
+      "title": "Orca 助手",
+      "newSession": "新会话",
+      "untitledSession": "新会话",
+      "closeSession": "关闭会话",
+      "noSessions": "还没有会话。",
+      "createFailed": "会话没能启动：{{reason}}",
+      "emptyState": "问问你的仓库、工作树和智能体，或者让助手替你启动、指挥智能体。"
+    }
   }
 }

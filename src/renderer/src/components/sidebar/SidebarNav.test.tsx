@@ -126,6 +126,7 @@ function setSidebarState({
     settings,
     repos,
     activeView: 'worktrees',
+    agentStatusByPaneKey: {},
     openTaskPage: mocks.openTaskPage,
     openAutomationsPage: mocks.openAutomationsPage,
     openActivityPage: mocks.openActivityPage,

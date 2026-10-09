@@ -32,6 +32,10 @@ import {
   resolveUncommittedStructuredCreate,
   type StructuredCreateRefused
 } from './structured-agent-session-precommit-refusal'
+import {
+  ORCA_ASSISTANT_LAUNCH_DIRECTORY,
+  type OrcaAssistantLaunchDirectory
+} from '../../../../shared/orca-assistant-session'
 
 export type PreparedStructuredAgentSessionCreate = {
   host: StructuredAgentSessionHost
@@ -54,6 +58,7 @@ export function structuredAgentSessionCreateIntentFingerprint(params: {
   agent: string
   resumeFrom?: StructuredAgentSessionResumeSource
   tabId?: string
+  launchDirectory?: OrcaAssistantLaunchDirectory
 }): string {
   return computeAgentSessionPayloadFingerprint({
     method: 'agentSession.create',
@@ -62,7 +67,8 @@ export function structuredAgentSessionCreateIntentFingerprint(params: {
       worktree: params.worktree,
       agent: params.agent,
       resumeFrom: params.resumeFrom,
-      tabId: params.tabId
+      tabId: params.tabId,
+      launchDirectory: params.launchDirectory
     }
   })
 }
@@ -85,6 +91,8 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
   /** The tab id the caller reserved for this chat, taken when its tab is published; absent, the tab
    *  gets the id clients derive. Beside `options`, after the fingerprint, likewise. */
   tabId?: string
+  /** An Orca assistant chat: launched in the assistant folder and published as no workspace tab. */
+  launchDirectory?: OrcaAssistantLaunchDirectory
 }): Promise<PreparedStructuredAgentSessionCreate> {
   // Adoption replay may need the record loaded from disk before source discovery can be skipped.
   let host = args.resumeFrom ? await args.ensureHost() : null
@@ -93,7 +101,8 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
     worktree: args.worktree,
     agent: args.agent,
     callerKey: args.caller.callerKey,
-    ...(args.resumeFrom ? { resumeFrom: args.resumeFrom } : {})
+    ...(args.resumeFrom ? { resumeFrom: args.resumeFrom } : {}),
+    ...(args.launchDirectory ? { launchDirectory: args.launchDirectory } : {})
   })
   const hostFingerprint = computeAgentSessionPayloadFingerprint({
     method: 'agentSession.attach',
@@ -107,6 +116,7 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
     hostLaunchDirectory,
     ...resolvedAttach
   } = resolved
+  const assistant = args.launchDirectory === ORCA_ASSISTANT_LAUNCH_DIRECTORY
   return {
     host,
     ...(hostLaunchDirectory ? { hostLaunchDirectory } : {}),
@@ -121,10 +131,13 @@ export async function prepareStructuredAgentSessionCreateForWorktree(args: {
       agent: resolved.agent,
       envelope: { ...args.envelope, payloadFingerprint: hostFingerprint }
     },
-    tab: {
-      workspaceId: resolved.location.workspaceId,
-      agent: resolved.agent
-    }
+    // Why no tab: assistant chats live on the assistant page, not in the floating panel.
+    tab: assistant
+      ? null
+      : {
+          workspaceId: resolved.location.workspaceId,
+          agent: resolved.agent
+        }
   }
 }
 

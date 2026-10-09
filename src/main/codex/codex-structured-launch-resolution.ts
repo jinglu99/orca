@@ -19,6 +19,9 @@ import { resolvePinnedCodexRolloutProof } from './codex-pinned-rollout-proof'
 import { codexStructuredLaunchArgs } from './codex-structured-launch-args'
 import { CODEX_STRUCTURED_AGENT } from './codex-structured-agent-definition'
 import type { PrepareNativeChatVisuals } from '../native-chat/native-chat-visuals-delivery'
+import { isOrcaAssistantWorkspacePath } from '../orca-assistant/orca-assistant-location'
+import { orcaAssistantCodexConfigArgs } from '../orca-assistant/orca-assistant-mcp-config'
+import { resolveThisAppCli } from '../orca-assistant/orca-assistant-workspace'
 
 export type CodexStructuredLaunchResolverDeps = {
   store: Pick<AgentSessionRecordStore, 'getRecord' | 'pinLaunchDirectory'>
@@ -97,10 +100,16 @@ export function createCodexStructuredLaunchResolver(
     // The same saved options every turn sends, so the thread and its turns name one model.
     const model = record.options?.model
     const visuals = (await deps.prepareVisuals?.(record.sessionId)) ?? null
+    const cwd = await resolveAgentSessionLaunchDirectory(deps, record)
+    const assistantCli = isOrcaAssistantWorkspacePath(cwd) ? resolveThisAppCli() : null
     return {
       command,
-      args: [...args, 'app-server'],
-      cwd: await resolveAgentSessionLaunchDirectory(deps, record),
+      args: [
+        ...args,
+        ...(assistantCli ? orcaAssistantCodexConfigArgs(assistantCli) : []),
+        'app-server'
+      ],
+      cwd,
       codexHome: accountHome.path,
       ...(environment ? { env: { ...environment } as Record<string, string> } : {}),
       // An empty chain is a session that has never proved a thread, so it

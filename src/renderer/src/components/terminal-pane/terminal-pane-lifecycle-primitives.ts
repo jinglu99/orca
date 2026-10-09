@@ -129,15 +129,13 @@ export function resolveQueuedInitialCwd(
   }
 }
 
-export function clearQueuedInitialCwdAfterFirstPane(
+/** The cwd later panes in this mount start in: only the first pane honours the queued one. */
+export function ptyCwdAfterFirstPane(
   queuedInitialCwd: string | null | undefined,
   defaultTabCwd: string,
   currentPtyCwd: string
-): { queuedInitialCwd: string | null | undefined; ptyCwd: string } {
-  if (!queuedInitialCwd) {
-    return { queuedInitialCwd, ptyCwd: currentPtyCwd }
-  }
-  return { queuedInitialCwd: null, ptyCwd: defaultTabCwd }
+): string {
+  return queuedInitialCwd ? defaultTabCwd : currentPtyCwd
 }
 
 export function resolvePaneLinkCwd(

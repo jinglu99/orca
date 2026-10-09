@@ -25,7 +25,7 @@ import { completePaneSpawnPlacement } from './terminal-pane-spawn-placement'
 import {
   createQueuedStartupConsumer,
   resolvePaneSeedCwd,
-  clearQueuedInitialCwdAfterFirstPane
+  ptyCwdAfterFirstPane
 } from './terminal-pane-lifecycle-primitives'
 import type { TerminalPaneManagerOptionsContext } from './terminal-pane-mount-context'
 import { installTerminalPaneInputHandling } from './terminal-pane-pane-input'
@@ -221,13 +221,13 @@ export function createTerminalPaneCreatedHandler(
       restoredLeafId: pane.leafId
     })
     ptyDeps.startup = null
-    const nextInitialCwdState = clearQueuedInitialCwdAfterFirstPane(
+    // Why the queued cwd stays queued: a mount torn down before its first pane spawns (a floating
+    // launch remounts at once) must start that pane there again, not at the default cwd.
+    ptyDeps.cwd = ptyCwdAfterFirstPane(
       refs.queuedInitialCwdRef.current,
       context.defaultTabCwd,
       ptyDeps.cwd ?? ''
     )
-    refs.queuedInitialCwdRef.current = nextInitialCwdState.queuedInitialCwd
-    ptyDeps.cwd = nextInitialCwdState.ptyCwd
     deps.panePtyBindingsRef.current.set(pane.id, panePtyBinding)
     context.syncPaneCount()
     scheduleRuntimeGraphSync()

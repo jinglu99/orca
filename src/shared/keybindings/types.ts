@@ -52,6 +52,7 @@ export type KeybindingActionId =
   | 'floatingTerminal.toggle'
   | 'floatingWorkspace.maximize'
   | 'floatingWorkspace.minimize'
+  | 'orcaAssistant.open'
   | 'zoom.in'
   | 'zoom.out'
   | 'zoom.reset'

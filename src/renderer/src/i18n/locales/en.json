@@ -5675,7 +5675,8 @@
           "fee535205b": "Tasks",
           "d599269755": "Hide from sidebar",
           "artifacts": "Artifacts",
-          "skills": "Skills"
+          "skills": "Skills",
+          "orcaAssistant": "Orca Assistant"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Clear",
@@ -19632,6 +19633,33 @@
     "attachments": {
       "updateRuntime": "Update the remote runtime to change workspace links",
       "updateRuntimeSafely": "Update the remote runtime to safely change workspace links"
+    }
+  },
+  "orcaAssistant": {
+    "attentionPrompt": "Which of my agents are waiting for me or blocked right now, and what does each one need from me?",
+    "quickAction": {
+      "open": "Ask Orca Assistant",
+      "openDescription": "Chat with an agent that can see and operate your worktrees and agents.",
+      "verbs": {
+        "assistant": "assistant",
+        "ask": "ask orca",
+        "bot": "bot",
+        "waiting": "waiting agents",
+        "blocked": "blocked agents",
+        "needsAttention": "needs attention"
+      },
+      "attention": "Which Agents Need Me?",
+      "attentionDescription": "Ask the Orca assistant which agents are waiting for you and what they need."
+    },
+    "attention": "{{count}} agents need you. Ask the Orca assistant what they need.",
+    "page": {
+      "title": "Orca Assistant",
+      "newSession": "New chat",
+      "untitledSession": "New chat",
+      "closeSession": "Close chat",
+      "noSessions": "No chats yet.",
+      "createFailed": "The chat could not start: {{reason}}",
+      "emptyState": "Ask about your repositories, worktrees and agents, or have the assistant start and steer agents for you."
     }
   }
 }

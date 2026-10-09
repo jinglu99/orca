@@ -3,6 +3,16 @@ import { platformBindings } from './definitions-support'
 
 export const KEYBINDING_DEFINITION_CORE_4: readonly KeybindingDefinition[] = [
   {
+    id: 'orcaAssistant.open',
+    title: 'Open Orca Assistant',
+    group: 'Global',
+    scope: 'global',
+    searchKeywords: ['shortcut', 'assistant', 'bot', 'ai', 'ask', 'orca assistant', 'floating'],
+    // Why Mod+Alt+O: beside the floating workspace's Mod+Alt+A, and free on every platform.
+    defaultBindings: platformBindings(['Mod+Alt+O']),
+    allowInTerminal: true
+  },
+  {
     id: 'sidebar.childWorkspaces.toggle',
     title: 'Toggle Child Workspaces',
     group: 'Global',

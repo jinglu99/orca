@@ -281,5 +281,10 @@ export const HANDLER_GROUPS: readonly HandlerGroup[] = [
     name: 'search',
     keys: ['search'],
     load: async () => (await import('./handlers/search.js')).SEARCH_HANDLERS
+  },
+  {
+    name: 'mcp',
+    keys: ['mcp serve'],
+    load: async () => (await import('./handlers/mcp.js')).MCP_HANDLERS
   }
 ]
