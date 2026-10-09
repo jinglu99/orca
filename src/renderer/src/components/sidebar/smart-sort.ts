@@ -7,6 +7,7 @@ import type {
 } from '../../../../shared/agent-status-types'
 import { tabHasLivePty } from '@/lib/tab-has-live-pty'
 import { basename } from '@/lib/path'
+import { getWorktreeVisitTimestamp } from '@/lib/worktree-visit-recency'
 import {
   IDLE,
   buildAttentionByWorktree,
@@ -14,7 +15,7 @@ import {
   type WorktreeAttention
 } from './smart-attention'
 
-export type SortBy = 'name' | 'smart' | 'recent' | 'repo' | 'manual'
+export type SortBy = 'name' | 'smart' | 'recent' | 'visited' | 'repo' | 'manual'
 
 // Why: a newly-created worktree's lastActivityAt is stamped at the moment
 // createLocalWorktree finishes git + setup-runner prep (often several seconds
@@ -106,8 +107,19 @@ export function buildWorktreeComparator(
   repoMap: Map<string, Repo>,
   now: number,
   attentionByWorktree: Map<string, WorktreeAttention>,
-  labels?: WorktreeSortLabels
+  labels?: WorktreeSortLabels,
+  lastVisitedAtByWorktreeId?: Readonly<Record<string, number>>
 ): (a: Worktree, b: Worktree) => number {
+  // Why cache: the visit lookup composes a host-qualified key, too costly per comparison.
+  const visitedAtCache = new Map<Worktree, number>()
+  const visitedAt = (worktree: Worktree): number => {
+    let value = visitedAtCache.get(worktree)
+    if (value === undefined) {
+      value = getWorktreeVisitTimestamp(lastVisitedAtByWorktreeId, worktree) ?? 0
+      visitedAtCache.set(worktree, value)
+    }
+    return value
+  }
   return (a, b) => {
     switch (sortBy) {
       case 'name':
@@ -139,6 +151,13 @@ export function buildWorktreeComparator(
         // signal — bumped by bumpWorktreeActivity (PTY spawn, background
         // events) and by meaningful meta edits (comment, isUnread).
         return (
+          effectiveRecentActivity(b, now) - effectiveRecentActivity(a, now) ||
+          compareWorktreeSortLabel(a, b, labels)
+        )
+      case 'visited':
+        // Why lastVisitedAt first: it records the user switching to a workspace; never-visited rows fall back to activity.
+        return (
+          visitedAt(b) - visitedAt(a) ||
           effectiveRecentActivity(b, now) - effectiveRecentActivity(a, now) ||
           compareWorktreeSortLabel(a, b, labels)
         )

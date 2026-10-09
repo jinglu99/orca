@@ -25,6 +25,8 @@ type MockState = {
   collapsedGroups: Set<string>
   setCollapsedGroups: (keys: readonly string[]) => void
   groupBy: string
+  setGroupBy: (groupBy: string) => void
+  setSortBy: (sortBy: string) => void
   sidebarBody: 'workspaces' | 'agents'
   sidebarWidth: number
   setSidebarBody: (body: 'workspaces' | 'agents') => void
@@ -118,6 +120,8 @@ beforeEach(() => {
     collapsedGroups: new Set<string>(),
     setCollapsedGroups: vi.fn(),
     groupBy: 'repo',
+    setGroupBy: vi.fn(),
+    setSortBy: vi.fn(),
     sidebarBody: 'workspaces',
     sidebarWidth: 280,
     setSidebarBody: vi.fn(),
@@ -274,6 +278,36 @@ describe('SidebarHeader', () => {
     expect(container.querySelector('[data-sidebar-section-title="workspaces"]')?.textContent).toBe(
       'Workspaces'
     )
+  })
+
+  it('switches between the project tree and the flat recently-used workspace list', () => {
+    act(() => {
+      root.render(<SidebarHeader onWorkspaceBoardMenuOpenChange={vi.fn()} />)
+    })
+    const projects = container.querySelector<HTMLButtonElement>(
+      '[data-sidebar-section-title="projects"]'
+    )
+    const workspaces = container.querySelector<HTMLButtonElement>(
+      '[data-sidebar-section-title="workspaces"]'
+    )
+    expect(projects?.getAttribute('aria-pressed')).toBe('true')
+
+    act(() => {
+      workspaces?.click()
+    })
+    expect(mockState.setGroupBy).toHaveBeenCalledWith('none')
+    expect(mockState.setSortBy).toHaveBeenCalledWith('visited')
+
+    mockState.groupBy = 'none'
+    act(() => {
+      root.render(<SidebarHeader onWorkspaceBoardMenuOpenChange={vi.fn()} />)
+    })
+    expect(workspaces?.getAttribute('aria-pressed')).toBe('true')
+
+    act(() => {
+      projects?.click()
+    })
+    expect(mockState.setGroupBy).toHaveBeenLastCalledWith('repo')
   })
 
   it('swaps only the options slot in the agents view so no header button shifts', () => {

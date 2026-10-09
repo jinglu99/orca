@@ -302,7 +302,14 @@ export function getVisibleWorktreeIds(): string[] {
     // Why empty map: non-smart branches don't read attentionByWorktree, but
     // the param is required to keep smart-mode callers honest at the type level.
     const sorted = [...allWorktrees].sort(
-      buildWorktreeComparator(state.sortBy, repoMap, Date.now(), new Map())
+      buildWorktreeComparator(
+        state.sortBy,
+        repoMap,
+        Date.now(),
+        new Map(),
+        undefined,
+        state.lastVisitedAtByWorktreeId
+      )
     )
     sortedIds = sorted.map((w) => w.id)
   }

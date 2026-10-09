@@ -29,7 +29,7 @@ export type UISlicePreferences = {
   setSidebarBody: (body: UISlicePreferences['sidebarBody']) => void
   groupBy: 'none' | 'workspace-status' | 'repo' | 'pr-status'
   setGroupBy: (g: UISlicePreferences['groupBy']) => void
-  sortBy: 'name' | 'smart' | 'recent' | 'repo' | 'manual'
+  sortBy: 'name' | 'smart' | 'recent' | 'visited' | 'repo' | 'manual'
   setSortBy: (s: UISlicePreferences['sortBy']) => void
   projectOrderBy: ProjectOrderBy
   setProjectOrderBy: (p: ProjectOrderBy) => void

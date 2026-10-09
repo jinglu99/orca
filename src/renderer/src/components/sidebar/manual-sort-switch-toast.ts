@@ -1,7 +1,7 @@
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
-import { SORT_OPTIONS } from './sidebar-workspace-option-items'
+import { SORT_OPTIONS } from './sidebar-sort-options'
 
 const MANUAL_SORT_SWITCH_TOAST_ID = 'sidebar-manual-sort-switch'
 

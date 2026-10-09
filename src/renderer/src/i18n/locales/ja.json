@@ -5370,6 +5370,8 @@
           "keepDefaultBranchAria": "スリープ中のワークスペースを非表示にしてもデフォルトのブランチは表示したままにする"
         },
         "SidebarHeader": {
+          "collapseAllChildWorkspaces": "すべての子ワークスペースを折りたたむ",
+          "expandAllChildWorkspaces": "すべての子ワークスペースを展開",
           "projects": "プロジェクト",
           "92154beb7e": "新規ワークスペース",
           "49f62c5665": "ワークスペースボード",
@@ -5459,6 +5461,8 @@
           "bc96dbd041": "ワークスペースオプション ({{value0}})",
           "af9249c505": "最新のワークスペースアクティビティ",
           "b451c8b162": "最近の",
+          "recentlyUsed": "最近使用",
+          "recentlyUsedDescription": "最近切り替えたワークスペースが先頭に表示されます。",
           "6664282a7b": "プロジェクトをドラッグして配置します",
           "7b316bdd51": "手動",
           "7153d07485": "ワークスペースをドラッグして、各グループ内に配置します。",
@@ -18867,6 +18871,7 @@
   },
   "dashboard": {
     "sidebar": {
+      "panel": "サイドバーパネル",
       "label": "Agent",
       "dashboardLabel": "Agent ダッシュボード",
       "openActivity": "アクティビティを表示",

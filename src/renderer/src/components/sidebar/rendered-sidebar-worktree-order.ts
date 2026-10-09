@@ -8,6 +8,7 @@ import {
 import { getRepoMapFromState, getWorktreeMapFromState } from '@/store/selectors'
 import { getProjectHostSetupProjectionFromState } from '@/store/project-host-setup-selector'
 import { buildRows } from './worktree-list/grouping/build-rows'
+import { buildFlatWorkspaceNesting } from './worktree-list/grouping/flat-workspace-nesting'
 import { getPinnedWorktreeDisplayPolicy } from './worktree-list/grouping/row-types'
 import { addHostSectionRows, type HostSectionRow } from './host-section-rows'
 import { orderHostSectionOptions } from './host-section-order'
@@ -64,6 +65,7 @@ export function computeRenderedSidebarRows(
     state.worktreeCardProperties
   )
 
+  const worktreeMap = getWorktreeMapFromState(state)
   const rows = buildRows(
     state.groupBy,
     [...visibleWorktrees],
@@ -74,7 +76,7 @@ export function computeRenderedSidebarRows(
     state.workspaceStatuses,
     state.projectOrderBy,
     state.worktreeLineageById,
-    getWorktreeMapFromState(state),
+    worktreeMap,
     true,
     state.settings,
     filterProjectGroupsForVisibleHosts(projectGroups, visibleHostIdSet, defaultHostId),
@@ -93,7 +95,15 @@ export function computeRenderedSidebarRows(
     // Why no hostLabelById: it only feeds display-only host context labels, never row order.
     undefined,
     defaultHostId,
-    pinnedDisplayPolicy
+    pinnedDisplayPolicy,
+    buildFlatWorkspaceNesting({
+      groupBy: state.groupBy,
+      sortBy: state.sortBy,
+      workspaceLineageByChildKey: state.workspaceLineageByChildKey,
+      worktreeLineageById: state.worktreeLineageById,
+      worktreeMap,
+      lastVisitedAtByWorktreeId: state.lastVisitedAtByWorktreeId
+    })
   )
 
   // Why lazy: with no host filter, addHostSectionRows is a pass-through, so skip building the whole host registry on a keystroke.
