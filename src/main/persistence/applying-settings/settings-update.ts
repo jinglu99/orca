@@ -7,6 +7,7 @@ import {
   normalizeTuiAgentEnvRecord
 } from '../../../shared/tui-agent-launch-defaults'
 import { normalizeTerminalQuickCommands } from '../../../shared/terminal-quick-commands'
+import { normalizeTerminalEnvironmentVariables } from '../../../shared/terminal-environment-variables'
 import { normalizeTerminalCustomThemes } from '../../../shared/terminal-custom-themes'
 import { normalizeTerminalCursorStyleDefault } from '../../../shared/terminal-cursor-style-settings'
 import { normalizeDesktopTerminalScrollbackRows } from '../../../shared/terminal-scrollback-policy'
@@ -106,6 +107,11 @@ export function updateSettings(
   if ('agentDefaultEnv' in updates) {
     sanitizedUpdates.agentDefaultEnv = normalizeTuiAgentEnvRecord(updates.agentDefaultEnv)
     sanitizedUpdates.agentYoloDefaultsMigrated = true
+  }
+  if ('terminalEnvironmentVariables' in updates) {
+    sanitizedUpdates.terminalEnvironmentVariables = normalizeTerminalEnvironmentVariables(
+      updates.terminalEnvironmentVariables
+    )
   }
   if ('terminalQuickCommands' in updates) {
     sanitizedUpdates.terminalQuickCommands = normalizeTerminalQuickCommands(

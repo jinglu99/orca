@@ -28,6 +28,7 @@ import {
 } from './terminal-windows-search'
 import {
   getManageSessionsSearchEntries,
+  getTerminalEnvironmentSearchEntries,
   getTerminalSetupScriptSearchEntries,
   getTerminalWindowSearchEntries
 } from './terminal-window-setup-search'
@@ -60,6 +61,7 @@ export {
 } from './terminal-advanced-platform-search'
 export {
   getManageSessionsSearchEntries,
+  getTerminalEnvironmentSearchEntries,
   getTerminalWindowSearchEntries,
   getTerminalSetupScriptSearchEntries
 } from './terminal-window-setup-search'
@@ -178,6 +180,7 @@ export function getTerminalPaneSearchEntries(platform: {
       : []),
     ...getTerminalRightClickToPasteSearchEntry(),
     ...getTerminalSetupScriptSearchEntries(),
+    ...getTerminalEnvironmentSearchEntries(),
     ...getManageSessionsSearchEntries(),
     ...getTerminalAdvancedSearchEntries(),
     ...(platform.isMac

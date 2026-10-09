@@ -322,6 +322,16 @@
     "followSymlinkedDirectoriesDescription": "Search linked folders in Quick Open and expand local linked folders in File Explorer.",
     "accounts": {
       "claudeRemoveFolder": "Orca deletes this account's Claude folder and its sign-in from this computer. Chat history shared with System default stays. If it is selected, the next Claude you start uses System default."
+    },
+    "terminalEnvironment": {
+      "title": "Environment Variables",
+      "description": "Variables added to every new terminal on this computer, in all workspaces.",
+      "keywordEnv": "env",
+      "keywordEnvironment": "environment",
+      "keywordVariables": "variables",
+      "tooLarge": "This text is too large to save. Shorten it and try again.",
+      "hint": "One NAME=value per line; lines starting with # are ignored. Values are used as written, so $VAR is not expanded. New terminals only; SSH terminals and names starting with ORCA_ are skipped. Saved in plain text, so keep secrets out.",
+      "placeholder": "API_BASE_URL=http://localhost:8080\nNODE_OPTIONS=--max-old-space-size=8192"
     }
   },
   "menu": {

@@ -154,7 +154,17 @@
       "fileExplorer": "文件资源管理器"
     },
     "followSymlinkedDirectories": "跟随符号链接目录",
-    "followSymlinkedDirectoriesDescription": "在快速打开中搜索链接文件夹，并在文件资源管理器中展开本地链接文件夹。"
+    "followSymlinkedDirectoriesDescription": "在快速打开中搜索链接文件夹，并在文件资源管理器中展开本地链接文件夹。",
+    "terminalEnvironment": {
+      "title": "环境变量",
+      "description": "添加到这台电脑上所有工作区新开终端里的变量。",
+      "keywordEnv": "env",
+      "keywordEnvironment": "环境",
+      "keywordVariables": "变量",
+      "tooLarge": "内容太长，无法保存，请精简后重试。",
+      "hint": "每行一个 NAME=value，以 # 开头的行会被忽略。值按原样使用，不会展开 $VAR。只对新开的终端生效；SSH 终端和以 ORCA_ 开头的变量名会被跳过。以明文保存，请不要放密钥。",
+      "placeholder": "API_BASE_URL=http://localhost:8080\nNODE_OPTIONS=--max-old-space-size=8192"
+    }
   },
   "menu": {
     "checkForUpdates": "检查更新...",
