@@ -18,12 +18,12 @@ import { useTerminalPaneLifecycleRefs } from './use-terminal-pane-lifecycle-refs
 
 export {
   applyTerminalScrollbackRowsToMountedPanes,
-  clearQueuedInitialCwdAfterFirstPane,
   createQueuedStartupConsumer,
   getPreviousVisibleForTerminalPane,
   isTerminalPaneVisibilityResume,
   mapRestoredPaneTitlesByPaneId,
   paneOwnsQueuedStartup,
+  ptyCwdAfterFirstPane,
   replayLayoutWithOneShotParkIntent,
   resolvePaneLinkCwd,
   resolvePaneSeedCwd,

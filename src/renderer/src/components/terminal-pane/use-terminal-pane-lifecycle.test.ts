@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   applyTerminalPaneCloseRequest,
   applyTerminalScrollbackRowsToMountedPanes,
-  clearQueuedInitialCwdAfterFirstPane,
   createQueuedStartupConsumer,
   getPreviousVisibleForTerminalPane,
   isTerminalPaneVisibilityResume,
@@ -11,6 +10,7 @@ import {
   resolvePaneLinkCwd,
   resolvePaneSeedCwd,
   resolveQueuedInitialCwd,
+  ptyCwdAfterFirstPane,
   replayLayoutWithOneShotParkIntent,
   retireMountedTerminalPaneSurface,
   shouldDetachPaneTransportOnUnmount,
@@ -562,21 +562,26 @@ describe('resolveQueuedInitialCwd', () => {
   })
 })
 
-describe('clearQueuedInitialCwdAfterFirstPane', () => {
-  it('clears the one-shot cwd and restores the default cwd after the first pane', () => {
-    expect(
-      clearQueuedInitialCwdAfterFirstPane('/repo/packages/web', '/repo', '/repo/packages/web')
-    ).toEqual({
-      queuedInitialCwd: null,
-      ptyCwd: '/repo'
-    })
+describe('ptyCwdAfterFirstPane', () => {
+  it('starts later panes at the default cwd once the first pane took the queued one', () => {
+    expect(ptyCwdAfterFirstPane('/repo/packages/web', '/repo', '/repo/packages/web')).toBe('/repo')
   })
 
   it('leaves the cwd unchanged when no one-shot override is queued', () => {
-    expect(clearQueuedInitialCwdAfterFirstPane(null, '/repo', '/repo')).toEqual({
-      queuedInitialCwd: null,
-      ptyCwd: '/repo'
-    })
+    expect(ptyCwdAfterFirstPane(null, '/repo', '/repo/split')).toBe('/repo/split')
+  })
+
+  // Regression: a floating launch remounts before its first pane spawns, and the second mount
+  // used to find the queue cleared and start the agent at the default cwd.
+  it('keeps the queued cwd for a remount that has to create the first pane again', () => {
+    const consumeTabInitialCwd = vi.fn(() => '/user-data/orca-assistant')
+    const first = resolveQueuedInitialCwd(undefined, consumeTabInitialCwd, '/home')
+    ptyCwdAfterFirstPane(first.queuedInitialCwd, '/home', first.startupCwd)
+
+    const remount = resolveQueuedInitialCwd(first.queuedInitialCwd, consumeTabInitialCwd, '/home')
+
+    expect(remount.startupCwd).toBe('/user-data/orca-assistant')
+    expect(consumeTabInitialCwd).toHaveBeenCalledTimes(1)
   })
 })
 
