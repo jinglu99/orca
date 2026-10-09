@@ -1,3 +1,4 @@
+import { ORCA_ASSISTANT_LAUNCH_DIRECTORY } from '../orca-assistant-session'
 import {
   Identifier,
   JournalCursor,
@@ -128,7 +129,9 @@ export const CreateIntentParams = z
      * This object is strict, so an older host refuses a payload carrying it. A client sends it
      * only after `AGENT_SESSION_CREATE_TAB_ID_RUNTIME_CAPABILITY` is advertised.
      */
-    tabId: z.string().refine(isAgentSessionSurfaceTabId, 'Invalid chat tab ID').optional()
+    tabId: z.string().refine(isAgentSessionSurfaceTabId, 'Invalid chat tab ID').optional(),
+    /** Launch an Orca assistant chat in the host's assistant folder; floating workspace only. */
+    launchDirectory: z.literal(ORCA_ASSISTANT_LAUNCH_DIRECTORY).optional()
   })
   .strict()
 

@@ -31,6 +31,8 @@ import {
   type StructuredAgentId
 } from '../../shared/agent-session-provider-handle'
 import { agentSessionWireProviderHandle } from '../../shared/agent-session-provider-handle-encoding'
+import type { OrcaAssistantLaunchDirectory } from '../../shared/orca-assistant-session'
+import { ensureOrcaAssistantWorkspace } from '../orca-assistant/orca-assistant-workspace'
 
 export class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport extends OrcaRuntimeWithGetWorktreePs {
   async getStructuredAgentSessionCreateSupport(
@@ -149,10 +151,21 @@ export class OrcaRuntimeWithGetStructuredAgentSessionCreateSupport extends OrcaR
     agent: StructuredAgentId
     callerKey?: string
     resumeFrom?: { providerSessionId: string }
+    launchDirectory?: OrcaAssistantLaunchDirectory
   }): Promise<AgentSessionAttachParams & { hostLaunchDirectory?: string }> {
-    const hostLaunchDirectory = isFloatingWorkspaceSelector(input.worktree)
-      ? (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path
-      : undefined
+    const floating = isFloatingWorkspaceSelector(input.worktree)
+    // Why floating only: it is the one workspace whose sessions pin their own launch folder.
+    if (input.launchDirectory && !floating) {
+      throw agentSessionRefusalError('structured_agent_session_unsupported', {
+        reason: 'hostUnsupported'
+      })
+    }
+    // Resolved before the account home, so a Codex assistant trusts the folder it launches in.
+    const hostLaunchDirectory = input.launchDirectory
+      ? await ensureOrcaAssistantWorkspace()
+      : floating
+        ? (await this.resolveRuntimeFileTarget(input.worktree)).worktree.path
+        : undefined
     const resolveAccountHome = this.structuredAgentAccountHomeResolver(
       input.agent,
       input.worktree,

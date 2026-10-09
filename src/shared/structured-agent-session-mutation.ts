@@ -48,6 +48,7 @@ export function structuredAgentSessionCreateFingerprint(input: {
   agent: StructuredAgentId
   resumeFrom?: { providerSessionId: string }
   tabId?: string
+  launchDirectory?: string
 }): string {
   return structuredAgentSessionPayloadFingerprint({
     method: 'agentSession.create',
@@ -60,7 +61,9 @@ export function structuredAgentSessionCreateFingerprint(input: {
       resumeFrom: input.resumeFrom,
       // The host digests the same field; a retry naming another tab still replays with the
       // recorded one, since the host owns the id.
-      tabId: input.tabId
+      tabId: input.tabId,
+      // An assistant chat launches somewhere else, so it is a different intent from a plain one.
+      launchDirectory: input.launchDirectory
     }
   })
 }

@@ -1,5 +1,6 @@
 import type { StructuredAgentId } from './agent-session-provider-handle'
 import type { AgentSessionMutationEnvelope } from './agent-session-wire'
+import type { OrcaAssistantLaunchDirectory } from './orca-assistant-session'
 import {
   createStructuredAgentSessionOperationId,
   structuredAgentSessionCreateFingerprint
@@ -25,6 +26,7 @@ export type StructuredAgentSessionCreateParams = {
   resumeFrom?: StructuredAgentSessionResumeSource
   /** Sent only to a host advertising `AGENT_SESSION_CREATE_TAB_ID_RUNTIME_CAPABILITY`. */
   tabId?: string
+  launchDirectory?: OrcaAssistantLaunchDirectory
 }
 
 /** Provider-prefixed so a session id names its lane on sight, and underscore-only
@@ -55,6 +57,7 @@ export function structuredAgentSessionCreateParams(args: {
   agent: StructuredAgentId
   resumeFrom?: StructuredAgentSessionResumeSource
   tabId?: string
+  launchDirectory?: OrcaAssistantLaunchDirectory
   randomUuid: () => string
   now?: number
 }): StructuredAgentSessionCreateParams {
@@ -62,7 +65,8 @@ export function structuredAgentSessionCreateParams(args: {
     worktree: args.worktree,
     agent: args.agent,
     ...(args.resumeFrom ? { resumeFrom: args.resumeFrom } : {}),
-    ...(args.tabId ? { tabId: args.tabId } : {})
+    ...(args.tabId ? { tabId: args.tabId } : {}),
+    ...(args.launchDirectory ? { launchDirectory: args.launchDirectory } : {})
   }
   return {
     envelope: {

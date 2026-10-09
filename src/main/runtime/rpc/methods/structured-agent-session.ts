@@ -179,7 +179,8 @@ export const STRUCTURED_AGENT_SESSION_METHODS = [
             agent: params.agent,
             caller: callerFor(ctx),
             ...(params.resumeFrom ? { resumeFrom: params.resumeFrom } : {}),
-            ...(params.tabId ? { tabId: params.tabId } : {})
+            ...(params.tabId ? { tabId: params.tabId } : {}),
+            ...(params.launchDirectory ? { launchDirectory: params.launchDirectory } : {})
           })
         }
         const { host, attachParams } = await resolveClientSuppliedAttach(params, ctx)
